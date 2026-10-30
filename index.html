@@ -313,6 +313,38 @@ body.theme-light .emoji-picker{background:#fff;border-color:rgba(35,40,70,.12)}
 body.theme-light .conversation-label{background:rgba(255,255,255,.32);border-bottom-color:rgba(35,40,70,.06)}
 @media(max-width:760px){.conversation-label{padding:8px 12px;font-size:11px}}
 
+
+/* Monochrome palette: keep the entire interface strictly black, white, and gray. */
+:root{--bg:#050505;--win:#0a0a0a;--ink:#f5f5f5;--muted:#b0b0b0;--dim:#858585;--hover:rgba(255,255,255,.075);--accent:#fff;--accent-2:#aaa;color-scheme:dark}
+.bg{background:radial-gradient(ellipse at 50% 0%,rgba(255,255,255,.07),transparent 42%),var(--bg)}
+.bg:after{background:radial-gradient(ellipse 30% 23% at 17% 24%,rgba(255,255,255,.06),transparent 72%),radial-gradient(ellipse 24% 33% at 83% 30%,rgba(255,255,255,.045),transparent 70%),radial-gradient(ellipse 31% 20% at 65% 88%,rgba(255,255,255,.035),transparent 72%)}
+.home .mark,.pending .mark,.brand .mark{background:#fff;color:#080808;box-shadow:none}
+.home h1{text-shadow:none}
+.field:focus{border-color:rgba(255,255,255,.6);background:rgba(255,255,255,.08);box-shadow:0 0 0 3px rgba(255,255,255,.06)}
+.btn.primary,.send,.toast,.jump-latest{background:#fff;color:#080808;box-shadow:none}
+.btn.primary:hover,.send:hover{box-shadow:0 8px 22px rgba(0,0,0,.35)}
+.linkbtn{color:#fff}
+.conv.on{background:rgba(255,255,255,.12);box-shadow:inset 2px 0 #fff}
+.av{background:#262626;border-color:rgba(255,255,255,.12)}
+.row.mine .bub{background:#f4f4f4;color:#090909;box-shadow:none}
+.react.active{border-color:#ddd;background:rgba(255,255,255,.14)}
+.reply-preview{border-left-color:#aaa}
+.reply-quote{border-left-color:#aaa}
+.send{background:#fff;color:#080808}
+.pick{background:#262626}
+body.theme-light{--bg:#fff;--win:#fff;--ink:#111;--muted:#555;--dim:#777;--hover:rgba(0,0,0,.065);color-scheme:light;background:#fff;color:#111}
+body.theme-light .bg{background:radial-gradient(ellipse at 50% 0%,rgba(0,0,0,.045),transparent 42%),#fff}
+body.theme-light .bg:after{background:radial-gradient(ellipse 30% 23% at 17% 24%,rgba(0,0,0,.025),transparent 72%),radial-gradient(ellipse 24% 33% at 83% 30%,rgba(0,0,0,.02),transparent 70%)}
+body.theme-light .win,body.theme-light .card{background:rgba(255,255,255,.96);color:#111;border-color:rgba(0,0,0,.1)}
+body.theme-light .side{background:rgba(0,0,0,.025);border-color:rgba(0,0,0,.1)}
+body.theme-light .main,body.theme-light .head{background:rgba(255,255,255,.85);border-color:rgba(0,0,0,.08)}
+body.theme-light .bub{background:#eee;color:#111}
+body.theme-light .row.mine .bub{background:#222;color:#fff}
+body.theme-light .btn.primary,body.theme-light .send,body.theme-light .toast,body.theme-light .jump-latest{background:#111;color:#fff}
+body.theme-light .home .mark,body.theme-light .pending .mark,body.theme-light .brand .mark{background:#111;color:#fff}
+body.theme-light .linkbtn{color:#111}
+body.theme-light .pick{background:#ddd}
+
 </style>
 </head>
 <body>
