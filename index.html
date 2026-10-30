@@ -475,6 +475,24 @@ body .head, body .conversation-label, body .composer {
 }
 body #msg { background:rgba(128,128,128,.10) !important; }
 
+
+/* Final override: hyperlink-only bubbles stay dark across all built-in bubble themes. */
+.bub.hyperlink-bubble,
+.row .bub.hyperlink-bubble,
+.row.mine .bub.hyperlink-bubble,
+body.theme-light .bub.hyperlink-bubble,
+body.theme-light .row .bub.hyperlink-bubble,
+body.theme-light .row.mine .bub.hyperlink-bubble{
+  background:#333333!important;
+  background-image:none!important;
+  color:#f4f4f4!important;
+  border-color:#444444!important;
+  box-shadow:none!important;
+}
+.bub.hyperlink-bubble .message-link,
+body.theme-light .bub.hyperlink-bubble .message-link{
+  color:#9bc7ff!important;
+}
 </style>
 </head>
 <body>
