@@ -535,7 +535,7 @@ body #msg { background:rgba(128,128,128,.10) !important; }
       <button id="attachBtn" class="emoji-toggle" type="button" aria-label="Attach a file" title="Send a picture or file">📎</button>
       <button id="cameraBtn" class="emoji-toggle" type="button" aria-label="Take a picture" title="Take a picture">📸</button>
       <input id="attachInput" type="file" accept="image/*,.pdf,.txt,.doc,.docx,.xls,.xlsx,.zip" hidden>
-      <textarea id="msg" rows="1" maxlength="2000" placeholder="Write a message…" aria-label="Write a message"></textarea>
+      <textarea id="msg" rows="1" maxlength="2000" placeholder="Message" aria-label="Write a message"></textarea>
       <button id="send" class="send" aria-label="Send message">↑</button>
     </div>
   </section>
@@ -659,7 +659,7 @@ body #msg { background:rgba(128,128,128,.10) !important; }
     var nb=$("nicknameBtn");if(nb)nb.hidden=!room;
     var cl=$("conversationLabel");
     if(cl)cl.textContent=room?"Private conversation with "+titleOf():"Choose a person to start a private chat";
-    $("msg").placeholder=room?"Message "+titleOf()+" privately…":"Select a member to start a private chat";
+    $("msg").placeholder="Message";
     var mb=$("muteBtn");mb.hidden=!room;mb.textContent=room&&mutedChats[room]?"Chat alerts off":"Chat alerts on";mb.setAttribute("aria-pressed",room&&mutedChats[room]?"true":"false");
   }
   function paintMe(){
