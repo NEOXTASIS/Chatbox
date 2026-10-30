@@ -116,7 +116,7 @@ button:focus-visible{outline:2px solid #fff;outline-offset:2px}
 .dots-action{position:absolute;z-index:6;right:-25px;top:50%;transform:translateY(-50%);width:22px;height:26px;padding:0;border:0;border-radius:7px;background:transparent;color:var(--muted);font-size:17px;line-height:1;opacity:0;visibility:hidden;display:grid;place-items:center;transition:opacity .12s ease,background .12s ease}
 .row:hover .dots-action,.row.show-reactions .dots-action,.row:focus-within .dots-action{opacity:.72;visibility:visible}
 .dots-action:hover,.dots-action:focus-visible{opacity:1!important;background:var(--hover);outline:none}
-.reaction-quickbar{position:absolute;z-index:60;top:-18px;left:50%;right:auto;transform:translateX(-50%);display:flex;gap:3px;padding:5px;background:#202020;border:1px solid rgba(255,255,255,.14);border-radius:999px;box-shadow:0 8px 24px rgba(0,0,0,.45);opacity:0;visibility:hidden;pointer-events:none;transition:opacity .38s ease,visibility 0s linear .38s}
+.reaction-quickbar{position:fixed;z-index:2147483000;top:0;left:0;transform:none;display:flex;gap:3px;padding:5px;background:#202020;border:1px solid rgba(255,255,255,.18);border-radius:999px;box-shadow:0 8px 24px rgba(0,0,0,.65);opacity:0;visibility:hidden;pointer-events:none;transition:opacity .38s ease,visibility 0s linear .38s;max-width:calc(100vw - 16px);box-sizing:border-box}
 /* Center the floating emoji bar over the message and lift its row above nearby bubbles. */
 .row.show-reactions{position:relative;z-index:50}
 .row.show-reactions .col{z-index:51}
@@ -125,7 +125,7 @@ button:focus-visible{outline:2px solid #fff;outline-offset:2px}
 .reaction-quickbar .react:hover{background:rgba(255,255,255,.16)}
 /* Keep reaction controls floating over the bubble without changing chat layout. */
 .row .col{position:relative}
-.row .reaction-quickbar{transform:translateX(-50%)!important}
+.row .reaction-quickbar{transform:none!important}
 .row .bub:hover{transform:none;box-shadow:none}
 @media (hover:none),(pointer:coarse){.dots-action{opacity:.55;visibility:visible}.reaction-quickbar{opacity:0;visibility:hidden;pointer-events:none}.row.show-reactions{position:relative;z-index:50}.row.show-reactions .col{z-index:51}.row.show-reactions .reaction-quickbar{opacity:1;visibility:visible;pointer-events:auto;transition:opacity .38s ease,visibility 0s}}
 .bub:hover{transform:translateY(-2px);box-shadow:0 8px 22px rgba(0,0,0,.55)}
@@ -282,6 +282,8 @@ button:focus-visible{outline:2px solid #fff;outline-offset:2px}
   var auth=null,db=null,uid=null,isOwner=false,profiles={},msgs=[],mine=null,stickNext=true,newAvatar="",required=false,toastT=null;
   var unsubs=[],msgUnsub=null,handledDenied=false,room=null,limitN=PAGE,hasMore=false,anchor=null,allowedList=[],pendingList=[],authMode="login",authBusy=false;
   var audioCtx=null,alertsEnabled=false,firstSnapshotByRoom={},knownMessageIds={},lastAlertAt=0;
+  var ALERTS_STORAGE_KEY="chatboxAlertsEnabled";
+  try{alertsEnabled=window.localStorage.getItem(ALERTS_STORAGE_KEY)==="true";}catch(e){alertsEnabled=false;}
   var reactionCache={},reactionUnsubs={},REACTION_EMOJIS=["👍","❤️","😂","😮","😢","🙏"];
   var PICKER_EMOJIS=["😀","😃","😄","😁","😆","😅","😂","🤣","😊","😇","🙂","🙃","😉","😍","🥰","😘","😋","😎","🤔","🤗","😴","😭","😢","😡","🤯","🥳","😱","🤝","👏","🙌","🙏","👍","👎","❤️","🧡","💛","💚","💙","💜","🖤","💔","🔥","✨","🎉","💯","✅","🙏","💪","🤍","💖","💋","🌹","☀️","🌙","🍀","🐱","🐶","🍕","☕","⚽","🏍️"];
   var coarse=!!(window.matchMedia&&matchMedia("(pointer:coarse)").matches);
@@ -374,25 +376,36 @@ button:focus-visible{outline:2px solid #fff;outline-offset:2px}
       osc.connect(gain);gain.connect(audioCtx.destination);osc.start();osc.stop(audioCtx.currentTime+0.25);
     }catch(e){}
   }
-  function enableAlerts(){
-    try{
-      var C=window.AudioContext||window.webkitAudioContext;
-      if(C){if(!audioCtx)audioCtx=new C();if(audioCtx.state==="suspended")audioCtx.resume();}
-      alertsEnabled=true;
+  function saveAlertsPreference(){
+    try{window.localStorage.setItem(ALERTS_STORAGE_KEY,alertsEnabled?"true":"false");}catch(e){}
+  }
+  function toggleAlerts(){
+    alertsEnabled=!alertsEnabled;
+    saveAlertsPreference();
+    if(alertsEnabled){
+      try{
+        var C=window.AudioContext||window.webkitAudioContext;
+        if(C){if(!audioCtx)audioCtx=new C();if(audioCtx.state==="suspended")audioCtx.resume();}
+      }catch(e){}
       if("Notification" in window && Notification.permission==="default"){
-        Notification.requestPermission().then(function(){updateAlertsButton()}).catch(function(){});
+        try{Notification.requestPermission().then(function(){updateAlertsButton()}).catch(function(){});}catch(e){}
       }
-      updateAlertsButton();ding();
-      toast("Message alerts enabled.");
-    }catch(e){toast("Couldn’t enable sound on this browser.")}
+      updateAlertsButton();
+      ding();
+      toast("Message alerts are on.");
+    }else{
+      updateAlertsButton();
+      toast("Message alerts are off. Sounds and browser notifications are disabled in Chatbox.");
+    }
   }
   function updateAlertsButton(){
     var b=$("alertsBtn");if(!b)return;
-    b.textContent=alertsEnabled?"Alerts on":"Enable alerts";
+    b.textContent=alertsEnabled?"Alerts on":"Alerts off";
+    b.title=alertsEnabled?"Message sounds and browser notifications are on. Click to turn them off.":"Message sounds and browser notifications are off. Click to turn them on.";
     b.setAttribute("aria-pressed",alertsEnabled?"true":"false");
   }
   function notifyMessage(m){
-    if(m.uid===uid)return;
+    if(!alertsEnabled||m.uid===uid)return;
     var now=Date.now();if(now-lastAlertAt>250){ding();lastAlertAt=now;}
     if(document.hidden && "Notification" in window && Notification.permission==="granted"){
       try{new Notification("New message · "+titleOf(),{body:String(m.text||"New message").slice(0,120),tag:"chatbox-"+room});}catch(e){}
@@ -479,6 +492,21 @@ button:focus-visible{outline:2px solid #fff;outline-offset:2px}
       if(first)col.appendChild(el("div","meta",tm(m.t)));
       var b=el("div","bub",m.text);
       var quick=el("div","reaction-quickbar");
+      function positionQuickbar(){
+        var rect=b.getBoundingClientRect();
+        quick.style.visibility="hidden";
+        quick.style.opacity="0";
+        quick.style.left="0px";
+        quick.style.top="0px";
+        var width=quick.offsetWidth||190;
+        var left=Math.max(8,Math.min(window.innerWidth-width-8,rect.left+rect.width/2-width/2));
+        var top=rect.top-quick.offsetHeight-8;
+        if(top<8)top=Math.min(window.innerHeight-quick.offsetHeight-8,rect.bottom+8);
+        quick.style.left=Math.round(left)+"px";
+        quick.style.top=Math.round(Math.max(8,top))+"px";
+      }
+      row.addEventListener("mouseenter",positionQuickbar);
+      window.addEventListener("resize",function(){if(row.classList.contains("show-reactions")||row.matches(":hover"))positionQuickbar()});
       REACTION_EMOJIS.forEach(function(emoji){
         var qb=el("button","react",emoji);qb.type="button";qb.title="React with "+emoji;qb.setAttribute("aria-label","React with "+emoji);
         qb.onclick=function(ev){ev.stopPropagation();toggleReaction(m.id,emoji);row.classList.remove("show-reactions")};
@@ -486,11 +514,11 @@ button:focus-visible{outline:2px solid #fff;outline-offset:2px}
       });
       col.appendChild(quick);col.appendChild(b);
       var dots=el("button","dots-action","⋯");dots.type="button";dots.title="Message reactions";dots.setAttribute("aria-label","Open message reactions");
-      dots.onclick=function(ev){ev.stopPropagation();row.classList.toggle("show-reactions")};
+      dots.onclick=function(ev){ev.stopPropagation();row.classList.toggle("show-reactions");if(row.classList.contains("show-reactions"))positionQuickbar()};
       col.appendChild(dots);
       var pressTimer=null,pressTriggered=false;
       function clearPress(){if(pressTimer){clearTimeout(pressTimer);pressTimer=null}}
-      b.addEventListener("touchstart",function(){pressTriggered=false;clearPress();pressTimer=setTimeout(function(){pressTriggered=true;row.classList.add("show-reactions")},500)},{passive:true});
+      b.addEventListener("touchstart",function(){pressTriggered=false;clearPress();pressTimer=setTimeout(function(){pressTriggered=true;row.classList.add("show-reactions");positionQuickbar()},500)},{passive:true});
       ["touchend","touchcancel","touchmove"].forEach(function(ev){b.addEventListener(ev,clearPress,{passive:true})});
       b.addEventListener("contextmenu",function(ev){if(coarse){ev.preventDefault();row.classList.add("show-reactions")}});
       b.addEventListener("click",function(){if(coarse&&pressTriggered){pressTriggered=false;return}if(coarse&&row.classList.contains("show-reactions"))return});
@@ -672,7 +700,8 @@ button:focus-visible{outline:2px solid #fff;outline-offset:2px}
   buildEmojiPicker();
   $("emojiToggle").onclick=function(){ $("emojiPicker").hidden=!$("emojiPicker").hidden; };
   document.addEventListener("click",function(e){if(!e.target.closest("#emojiPicker")&&!e.target.closest("#emojiToggle"))$("emojiPicker").hidden=true});
-  $("alertsBtn").onclick=enableAlerts;
+  $("alertsBtn").onclick=toggleAlerts;
+  updateAlertsButton();
   $("msg").oninput=fit;
   $("msg").onkeydown=function(e){if(e.key==="Enter"&&!e.shiftKey&&!coarse){e.preventDefault();send()}};
   $("send").onclick=function(){send();if(!coarse)$("msg").focus()};
