@@ -621,6 +621,56 @@ button:active{transform:scale(.96)}
  .composer-tools{flex-basis:36px!important}
  #msg{height:36px!important;min-height:36px!important}
 }
+
+/* Final centering fix: center each control's icon inside its own hit area */
+.composer-shell{
+  display:flex!important;
+  align-items:center!important;
+  justify-content:space-between!important;
+  gap:8px!important;
+}
+.composer-shell .composer-tools{
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  align-self:center!important;
+  height:38px!important;
+  margin:0!important;
+  padding:0!important;
+}
+.composer-shell .composer-plus,
+.composer-shell>.voice-send-btn,
+.composer-shell>.send{
+  box-sizing:border-box!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  align-self:center!important;
+  line-height:0!important;
+  padding:0!important;
+  margin:0!important;
+  transform-origin:center!important;
+}
+.composer-shell .composer-plus svg,
+.composer-shell>.voice-send-btn svg,
+.composer-shell>.send svg{
+  display:block!important;
+  flex:none!important;
+  margin:0!important;
+  position:static!important;
+}
+.composer-shell #msg{
+  align-self:center!important;
+  box-sizing:border-box!important;
+  margin:0!important;
+  padding-top:9px!important;
+  padding-bottom:9px!important;
+  line-height:20px!important;
+}
+@media(max-width:480px){
+ .composer-shell{gap:7px!important}
+ .composer-shell .composer-tools{height:36px!important}
+}
 </style>
 </head>
 <body>
