@@ -113,24 +113,21 @@ button:focus-visible{outline:2px solid #fff;outline-offset:2px}
 .react.active{border-color:rgba(255,255,255,.65);background:rgba(255,255,255,.16)}
 .react .count{font-size:11px;color:var(--muted)}
 .row.mine .react.active{border-color:#aaa;background:#333;color:#fff}
-.dots-action{position:absolute;z-index:6;right:-25px;top:50%;transform:translateY(-50%);width:22px;height:26px;padding:0;border:0;border-radius:7px;background:transparent;color:var(--muted);font-size:17px;line-height:1;opacity:0;visibility:hidden;display:grid;place-items:center;transition:opacity .12s ease,background .12s ease}
-.row:hover .dots-action,.row.show-reactions .dots-action,.row:focus-within .dots-action{opacity:.72;visibility:visible}
+/* Small ellipsis is delayed on desktop; menu floats over the thread and never changes layout. */
+.dots-action{position:absolute;z-index:8;top:50%;width:22px;height:24px;padding:0;border:0;border-radius:7px;background:rgba(25,25,25,.92);color:var(--muted);font-size:17px;line-height:1;opacity:0;visibility:hidden;display:grid;place-items:center;transition:opacity .25s ease,background .2s ease;transform:translateY(-50%)}
+.row:not(.mine) .dots-action{right:-24px}.row.mine .dots-action{left:-24px}
+.row.menu-ready .dots-action,.row.show-reactions .dots-action,.row:focus-within .dots-action{opacity:.82;visibility:visible}
 .dots-action:hover,.dots-action:focus-visible{opacity:1!important;background:var(--hover);outline:none}
-.reaction-quickbar{position:fixed;z-index:2147483000;top:0;left:0;transform:none;display:flex;gap:3px;padding:5px;background:#202020;border:1px solid rgba(255,255,255,.18);border-radius:999px;box-shadow:0 8px 24px rgba(0,0,0,.65);opacity:0;visibility:hidden;pointer-events:none;transition:opacity .38s ease,visibility 0s linear .38s;max-width:calc(100vw - 16px);box-sizing:border-box}
-/* Center the floating emoji bar over the message and lift its row above nearby bubbles. */
-.row.show-reactions{position:relative;z-index:50}
-.row.show-reactions .col{z-index:51}
-.row:hover .reaction-quickbar,.row.show-reactions .reaction-quickbar,.row:focus-within .reaction-quickbar{opacity:1;visibility:visible;pointer-events:auto;transition:opacity .38s ease,visibility 0s}
+.reaction-quickbar{position:fixed;z-index:2147483000;top:0;left:0;display:flex;flex-wrap:wrap;align-items:center;gap:3px;padding:5px;background:#202020;border:1px solid rgba(255,255,255,.18);border-radius:14px;box-shadow:0 8px 24px rgba(0,0,0,.72);opacity:0;visibility:hidden;pointer-events:none;transition:opacity .45s ease,visibility 0s linear .45s;max-width:calc(100vw - 16px);box-sizing:border-box}
+.row.show-reactions{position:relative;z-index:100}
+.row.show-reactions .col{z-index:101}
+.row.show-reactions .reaction-quickbar{opacity:1;visibility:visible;pointer-events:auto;transition:opacity .45s ease,visibility 0s}
 .reaction-quickbar .react{font-size:18px;min-height:32px;min-width:32px;justify-content:center;padding:4px;border:0;background:transparent}
 .reaction-quickbar .react:hover{background:rgba(255,255,255,.16)}
-/* Keep reaction controls floating over the bubble without changing chat layout. */
-.row .col{position:relative}
-.row .reaction-quickbar{transform:none!important}
-.row .bub:hover{transform:none;box-shadow:none}
-@media (hover:none),(pointer:coarse){.dots-action{opacity:.55;visibility:visible}.reaction-quickbar{opacity:0;visibility:hidden;pointer-events:none}.row.show-reactions{position:relative;z-index:50}.row.show-reactions .col{z-index:51}.row.show-reactions .reaction-quickbar{opacity:1;visibility:visible;pointer-events:auto;transition:opacity .38s ease,visibility 0s}}
-.bub:hover{transform:translateY(-2px);box-shadow:0 8px 22px rgba(0,0,0,.55)}
-.dl{display:none;margin:4px 6px 0;padding:6px 4px;color:var(--danger);font-size:12px}
-.row.can:hover .dl,.row.can.sel .dl{display:block}
+.menu-action{font-size:12px;white-space:nowrap;padding:7px 9px;border-radius:8px;background:rgba(255,255,255,.07);color:#f4f4f2}
+.menu-action:hover{background:rgba(255,255,255,.16)}.menu-action.danger{color:#ff9a91}
+.reactions{align-self:flex-start}.row.mine .reactions{align-self:flex-end}
+.dl{display:none!important}
 /* emoji picker and message reactions */
 .composer{position:relative;flex:none;display:flex;align-items:flex-end;gap:10px;padding:12px 16px 16px}
 .emoji-toggle{flex:none;width:44px;height:44px;border-radius:50%;background:var(--hover);font-size:23px;display:grid;place-items:center}
@@ -494,34 +491,42 @@ button:focus-visible{outline:2px solid #fff;outline-offset:2px}
       var quick=el("div","reaction-quickbar");
       function positionQuickbar(){
         var rect=b.getBoundingClientRect();
-        quick.style.visibility="hidden";
-        quick.style.opacity="0";
-        quick.style.left="0px";
-        quick.style.top="0px";
-        var width=quick.offsetWidth||190;
+        quick.style.left="0px";quick.style.top="0px";
+        var width=quick.offsetWidth||240,height=quick.offsetHeight||44;
         var left=Math.max(8,Math.min(window.innerWidth-width-8,rect.left+rect.width/2-width/2));
-        var top=rect.top-quick.offsetHeight-8;
-        if(top<8)top=Math.min(window.innerHeight-quick.offsetHeight-8,rect.bottom+8);
-        quick.style.left=Math.round(left)+"px";
-        quick.style.top=Math.round(Math.max(8,top))+"px";
+        var top=rect.top-height-8;
+        if(top<8)top=Math.min(window.innerHeight-height-8,rect.bottom+8);
+        quick.style.left=Math.round(left)+"px";quick.style.top=Math.round(Math.max(8,top))+"px";
       }
-      row.addEventListener("mouseenter",positionQuickbar);
-      window.addEventListener("resize",function(){if(row.classList.contains("show-reactions")||row.matches(":hover"))positionQuickbar()});
       REACTION_EMOJIS.forEach(function(emoji){
         var qb=el("button","react",emoji);qb.type="button";qb.title="React with "+emoji;qb.setAttribute("aria-label","React with "+emoji);
-        qb.onclick=function(ev){ev.stopPropagation();toggleReaction(m.id,emoji);row.classList.remove("show-reactions")};
-        quick.appendChild(qb);
+        qb.onclick=function(ev){ev.stopPropagation();toggleReaction(m.id,emoji);closeMessageMenu(row)};quick.appendChild(qb);
       });
-      col.appendChild(quick);col.appendChild(b);
-      var dots=el("button","dots-action","⋯");dots.type="button";dots.title="Message reactions";dots.setAttribute("aria-label","Open message reactions");
+      function closeMessageMenu(target){target.classList.remove("show-reactions");}
+      var dots=el("button","dots-action","⋯");dots.type="button";dots.title="Message options";dots.setAttribute("aria-label","Open message options");
       dots.onclick=function(ev){ev.stopPropagation();row.classList.toggle("show-reactions");if(row.classList.contains("show-reactions"))positionQuickbar()};
       col.appendChild(dots);
+      var replyBtn=el("button","menu-action","Reply");replyBtn.type="button";
+      replyBtn.onclick=function(ev){ev.stopPropagation();var ta=$("msg");ta.value="↪ "+String(nameOf(profiles[m.uid]))+": "+String(m.text||"").split("\n")[0].slice(0,160)+"\n"+ta.value;ta.focus();fit();closeMessageMenu(row)};
+      quick.appendChild(replyBtn);
+      if(isMe){
+        var editBtn=el("button","menu-action","Edit");editBtn.type="button";
+        editBtn.onclick=function(ev){ev.stopPropagation();var next=window.prompt("Edit your message:",m.text||"");if(next===null){closeMessageMenu(row);return}next=next.trim();if(!next){toast("Message cannot be empty.");return}if(next.length>2000){toast("Messages must be 2,000 characters or fewer.");return}collFor(room).doc(m.id).update({text:next,editedAt:Date.now()}).then(function(){toast("Message edited.")}).catch(function(){toast("Couldn’t edit this message. Check Firestore rules.")});closeMessageMenu(row)};
+        quick.appendChild(editBtn);
+        var deleteBtn=el("button","menu-action danger","Delete");deleteBtn.type="button";
+        deleteBtn.onclick=function(ev){ev.stopPropagation();if(!window.confirm("Delete this message? This cannot be undone.")){closeMessageMenu(row);return}collFor(room).doc(m.id).delete().catch(function(){toast("Couldn’t delete that message.")});closeMessageMenu(row)};
+        quick.appendChild(deleteBtn);
+      }
+      col.appendChild(quick);col.appendChild(b);
+      var hoverTimer=null;
+      row.addEventListener("mouseenter",function(){clearTimeout(hoverTimer);hoverTimer=setTimeout(function(){row.classList.add("menu-ready")},3000)});
+      row.addEventListener("mouseleave",function(){clearTimeout(hoverTimer);row.classList.remove("menu-ready");if(!row.classList.contains("show-reactions"))closeMessageMenu(row)});
+      window.addEventListener("resize",function(){if(row.classList.contains("show-reactions"))positionQuickbar()});
       var pressTimer=null,pressTriggered=false;
       function clearPress(){if(pressTimer){clearTimeout(pressTimer);pressTimer=null}}
-      b.addEventListener("touchstart",function(){pressTriggered=false;clearPress();pressTimer=setTimeout(function(){pressTriggered=true;row.classList.add("show-reactions");positionQuickbar()},500)},{passive:true});
+      b.addEventListener("touchstart",function(){pressTriggered=false;clearPress();pressTimer=setTimeout(function(){pressTriggered=true;row.classList.add("show-reactions");positionQuickbar()},2000)},{passive:true});
       ["touchend","touchcancel","touchmove"].forEach(function(ev){b.addEventListener(ev,clearPress,{passive:true})});
-      b.addEventListener("contextmenu",function(ev){if(coarse){ev.preventDefault();row.classList.add("show-reactions")}});
-      b.addEventListener("click",function(){if(coarse&&pressTriggered){pressTriggered=false;return}if(coarse&&row.classList.contains("show-reactions"))return});
+      b.addEventListener("contextmenu",function(ev){if(coarse){ev.preventDefault();row.classList.add("show-reactions");positionQuickbar()}});
       if(isMe){
         var recipientRead=Array.isArray(m.readBy)&&m.readBy.indexOf(room)!==-1;
         col.appendChild(el("div","receipt",recipientRead?"Read":"Sent"));
@@ -540,15 +545,6 @@ button:focus-visible{outline:2px solid #fff;outline-offset:2px}
         rb.onclick=function(){toggleReaction(m.id,emoji)};bar.appendChild(rb);
       });
       col.appendChild(bar);
-      if(can){
-        b.onclick=function(){row.classList.toggle("sel")};
-        var dl=el("button","dl","Delete");
-        dl.onclick=function(){
-          if(dl.dataset.a!=="1"){dl.dataset.a="1";dl.textContent="Tap again to delete";setTimeout(function(){dl.dataset.a="0";dl.textContent="Delete"},3000);return}
-          collFor(room).doc(m.id).delete().catch(function(){toast("Couldn’t delete that message.")});
-        };
-        col.appendChild(dl);
-      }
       row.appendChild(col);th.appendChild(row);
     });
     if(anchor){th.scrollTop=anchor.top+(th.scrollHeight-anchor.h);anchor=null}
