@@ -107,6 +107,7 @@ button:focus-visible{outline:2px solid #fff;outline-offset:2px}
   transition:transform .18s ease,box-shadow .18s ease}
 .row.mine .bub{background:#f4f4f2;color:#0a0a0a;border-radius:18px 18px 6px 18px}
 .row.can .bub{cursor:pointer}
+@media (pointer:coarse){.row:not(.mine) .bub{touch-action:pan-y;}}
 .reactions{display:flex;flex-wrap:wrap;gap:5px;margin:6px 4px 0;max-width:100%}
 .react{display:inline-flex;align-items:center;gap:4px;padding:4px 7px;border:1px solid rgba(255,255,255,.1);border-radius:999px;background:rgba(255,255,255,.055);font-size:13px;line-height:1.2;min-height:28px}
 .react:hover{background:rgba(255,255,255,.13)}
@@ -143,9 +144,13 @@ button:focus-visible{outline:2px solid #fff;outline-offset:2px}
 .reply-preview-name{font-size:11px;font-weight:700;color:var(--text);opacity:.8}
 .reply-preview-text{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;opacity:.72}
 .reply-preview-cancel{flex:none;width:28px;height:28px;border-radius:50%;background:rgba(255,255,255,.08);color:var(--text);font-size:18px;line-height:1}
-.reply-quote{max-width:100%;margin:0 4px 5px;padding:7px 10px;border-left:3px solid rgba(255,255,255,.45);border-radius:7px;background:rgba(255,255,255,.07);opacity:.68;font-size:12px;line-height:1.35;overflow:hidden}
-.row.mine .reply-quote{border-left-color:rgba(0,0,0,.42);background:rgba(0,0,0,.07);color:inherit}
-.reply-quote-name{font-weight:700;display:block;margin-bottom:2px;opacity:.9}
+/* Quoted message sits directly above the reply bubble, like Messenger/iMessage. */
+.reply-quote{position:relative;box-sizing:border-box;max-width:100%;margin:0 5px 5px;padding:8px 11px 8px 13px;border-left:3px solid rgba(255,255,255,.5);border-radius:10px 10px 4px 10px;background:rgba(255,255,255,.10);color:var(--text);opacity:.76;font-size:12px;line-height:1.35;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.12)}
+.reply-quote:after{content:"";position:absolute;left:-3px;bottom:-7px;width:11px;height:12px;border-left:3px solid rgba(255,255,255,.5);border-bottom:3px solid rgba(255,255,255,.5);border-radius:0 0 0 9px;opacity:.75}
+.row.mine .reply-quote{border-left-color:rgba(0,0,0,.34);background:rgba(0,0,0,.13);color:inherit;align-self:flex-end}
+.row.mine .reply-quote:after{border-left-color:rgba(0,0,0,.34);border-bottom-color:rgba(0,0,0,.34)}
+.reply-quote-name{font-weight:700;display:block;margin-bottom:3px;opacity:.9}
+.reply-quote-text{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;opacity:.88}
 /* emoji picker and message reactions */
 .composer{position:relative;flex:none;display:flex;align-items:flex-end;gap:10px;padding:12px 16px 16px}
 .emoji-toggle{flex:none;width:44px;height:44px;border-radius:50%;background:var(--hover);font-size:23px;display:grid;place-items:center}
