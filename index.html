@@ -177,7 +177,7 @@ body.theme-light{--bg:#f0f0f0;--win:#fff;--ink:#171717;--muted:#666;--dim:#85858
 .pick{position:relative;width:96px;height:96px;border-radius:50%;background:#262626;overflow:hidden;display:grid;place-items:center;font:500 28px var(--display);transition:transform .18s ease;cursor:default}.pick small{display:none!important}.photo-controls{display:flex;justify-content:center;gap:10px;margin:12px 0 22px;flex-wrap:wrap}.photo-controls .btn{padding:10px 16px;font-size:14px}.crop-panel{width:100%;margin:8px 0 16px;padding:14px;border:1px solid rgba(255,255,255,.12);border-radius:14px;background:rgba(0,0,0,.12)}.crop-panel[hidden]{display:none!important}.crop-viewport{width:min(72vw,260px);height:min(72vw,260px);max-height:260px;margin:0 auto 14px;overflow:hidden;border-radius:50%;position:relative;touch-action:none;background:#111;cursor:grab}.crop-viewport img{position:absolute;max-width:none;max-height:none;user-select:none;-webkit-user-drag:none;pointer-events:none}.crop-zoom{display:flex;align-items:center;gap:12px;margin:12px 0}.crop-zoom input{flex:1}
 .pick:hover{transform:translateY(-2px)}
 .pick img{width:100%;height:100%;object-fit:cover}
-.pick small{position:absolute;inset:auto 0 0;background:rgba(0,0,0,.6);font:600 11px var(--sans);padding:3px 0;text-align:center}
+.pick small{display:none!important}.profile-photo-wrap{display:flex;flex-direction:column;align-items:center;width:100%}.profile-photo-wrap #pick small{display:none!important}
 .btns{display:flex;gap:10px;width:100%}
 .out{color:var(--muted);font-size:13px;padding:4px 8px}
 .mlist{width:100%;display:grid;gap:6px}
@@ -551,7 +551,7 @@ body #msg { background:rgba(128,128,128,.10) !important; }
 <div id="modal" class="modal" hidden>
   <div class="card" role="dialog" aria-label="Your profile">
     <h2 id="mtitle">Set up your profile</h2>
-    <button id="pick" class="pick" aria-label="Preview profile picture"></button>
+    <div class="profile-photo-wrap"><button id="pick" class="pick" aria-label="Preview profile picture" type="button"></button></div>
     <div class="photo-controls"><button id="changePhoto" class="btn" type="button">Change photo</button><button id="cropPhoto" class="btn" type="button" disabled>Crop image</button></div>
     <input id="pfile" type="file" accept="image/*" hidden>
     <div id="cropPanel" class="crop-panel" hidden><p class="note">Adjust the crop by dragging the image, then save your square crop.</p><div class="crop-viewport" id="cropViewport"><img id="cropImage" alt="Adjustable crop preview"></div><div class="crop-zoom"><label for="cropZoom">Zoom</label><input id="cropZoom" type="range" min="1" max="3" step="0.05" value="1"></div><div class="btns"><button id="cancelCrop" class="btn" type="button">Cancel crop</button><button id="applyCrop" class="btn primary" type="button">Use crop</button></div></div>
