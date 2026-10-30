@@ -7,7 +7,7 @@
 <meta name="referrer" content="no-referrer">
 <meta name="theme-color" content="#080a12">
 <meta name="color-scheme" content="dark">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://www.gstatic.com https://apis.google.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://*.firebaseapp.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com wss://*.firebaseio.com; frame-src https://*.firebaseapp.com https://accounts.google.com; base-uri 'self'; form-action 'self'; object-src 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://www.gstatic.com https://apis.google.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: blob:; media-src 'self' blob:; connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://*.firebaseapp.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com wss://*.firebaseio.com; frame-src https://*.firebaseapp.com https://accounts.google.com; base-uri 'self'; form-action 'self'; object-src 'none'">
 <title>Chatbox</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@400;500;600&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -156,7 +156,7 @@ body.theme-light{--bg:#f0f0f0;--win:#fff;--ink:#171717;--muted:#666;--dim:#85858
 .reply-quote-name{font-weight:700;display:block;margin-bottom:3px;opacity:.9}
 .reply-quote-text{display:block;white-space:pre-wrap;overflow-wrap:anywhere;opacity:.94;max-height:4.2em;overflow:hidden}
 /* emoji picker and message reactions */
-.composer{position:relative;flex:none;display:flex;align-items:flex-end;gap:10px;padding:12px 16px 16px}
+.composer{position:relative;flex:none;display:flex;align-items:flex-end;gap:8px;padding:12px 12px 16px}.composer .emoji-toggle{width:40px;height:40px;font-size:19px}.camera-card{width:min(94vw,520px)}.camera-card video{width:100%;max-height:60vh;background:#111;border-radius:12px;object-fit:cover}.attachment{display:block;max-width:min(100%,320px);max-height:320px;border-radius:12px;margin-top:7px}.attachment-link{display:inline-block;margin-top:6px;padding:7px 10px;border-radius:8px;background:rgba(255,255,255,.1);color:inherit;text-decoration:none;overflow-wrap:anywhere}
 .emoji-toggle{flex:none;width:44px;height:44px;border-radius:50%;background:var(--hover);font-size:23px;display:grid;place-items:center}
 .emoji-toggle:hover{background:rgba(255,255,255,.14)}
 .emoji-picker{position:absolute;left:16px;bottom:70px;z-index:8;width:min(320px,calc(100vw - 32px));padding:10px;background:#171717;border:1px solid rgba(255,255,255,.12);border-radius:16px;box-shadow:0 16px 40px rgba(0,0,0,.55);display:grid;grid-template-columns:repeat(8,minmax(0,1fr));gap:4px}
@@ -517,6 +517,7 @@ body #msg { background:rgba(128,128,128,.10) !important; }
       <div id="title" class="title">Private chats</div>
       <button id="searchBtn" class="head-tool" type="button" title="Search loaded messages" aria-label="Search messages">Search</button>
       <button id="muteBtn" class="head-tool" type="button" title="Toggle notifications for this chat" aria-pressed="false" hidden>Chat alerts on</button>
+      <button id="nicknameBtn" class="head-tool" type="button" title="Set a nickname for this contact" hidden>Nickname</button>
       <button id="themeBtn" class="head-tool" type="button" title="Toggle light and dark theme" aria-pressed="false">Light theme</button>
       <button id="alertsBtn" class="alerts-btn" type="button" title="Enable message sounds and browser notifications">Enable alerts</button>
       <button id="me" class="me" hidden aria-label="Edit your profile"></button>
@@ -531,11 +532,16 @@ body #msg { background:rgba(128,128,128,.10) !important; }
     <div class="composer">
       <div id="emojiPicker" class="emoji-picker" hidden aria-label="Choose an emoji"></div>
       <button id="emojiToggle" class="emoji-toggle" type="button" aria-label="Add emoji" title="Add emoji">☺</button>
+      <button id="attachBtn" class="emoji-toggle" type="button" aria-label="Attach a file" title="Send a picture or file">📎</button>
+      <button id="cameraBtn" class="emoji-toggle" type="button" aria-label="Take a picture" title="Take a picture">📸</button>
+      <input id="attachInput" type="file" accept="image/*,.pdf,.txt,.doc,.docx,.xls,.xlsx,.zip" hidden>
       <textarea id="msg" rows="1" maxlength="2000" placeholder="Write a message…" aria-label="Write a message"></textarea>
       <button id="send" class="send" aria-label="Send message">↑</button>
     </div>
   </section>
 </main>
+
+<div id="cameraModal" class="modal" hidden><div class="card camera-card" role="dialog" aria-label="Take a picture"><h2>Take a picture</h2><video id="cameraVideo" autoplay playsinline></video><div class="btns"><button id="cameraCancel" class="btn" type="button">Cancel</button><button id="cameraCapture" class="btn primary" type="button">Capture</button></div><p id="cameraError" class="err"></p></div></div>
 
 <div id="modal" class="modal" hidden>
   <div class="card" role="dialog" aria-label="Your profile">
@@ -605,7 +611,9 @@ body #msg { background:rgba(128,128,128,.10) !important; }
   function collFor(r){
     return db.collection("dms").doc(roomId(uid,r)).collection("messages");
   }
-  function titleOf(){return room?nameOf(profiles[room]):"Private chats"}
+  function nickMap(){try{return JSON.parse(localStorage.getItem("chatboxNicknames:"+uid)||"{}")}catch(e){return {}}}
+  function nicknameOf(k){return nickMap()[k]||nameOf(profiles[k])}
+  function titleOf(){return room?nicknameOf(room):"Private chats"}
 
   function showHome(msg){
     $("win").hidden=true;$("pending").hidden=true;$("modal").hidden=true;$("mem").hidden=true;$("home").hidden=false;
@@ -642,12 +650,13 @@ body #msg { background:rgba(128,128,128,.10) !important; }
   }
   function paintSide(){
     var l=$("list");l.textContent="";
-    var ids=Object.keys(profiles).filter(function(k){return k!==uid&&nameOf(profiles[k]).toLowerCase().indexOf(chatSearchQuery)>=0}).sort(function(a,b){if(!!pinnedChats[a]!==!!pinnedChats[b])return pinnedChats[a]?-1:1;return nameOf(profiles[a]).toLowerCase()<nameOf(profiles[b]).toLowerCase()?-1:1});
+    var ids=Object.keys(profiles).filter(function(k){return k!==uid&&nicknameOf(k).toLowerCase().indexOf(chatSearchQuery)>=0}).sort(function(a,b){if(!!pinnedChats[a]!==!!pinnedChats[b])return pinnedChats[a]?-1:1;return nameOf(profiles[a]).toLowerCase()<nameOf(profiles[b]).toLowerCase()?-1:1});
     if(!ids.length)l.appendChild(el("div","side-empty",chatSearchQuery?"No members match your search.":"No other approved members yet."));
-    ids.forEach(function(k){l.appendChild(conv(k,nameOf(profiles[k]),profiles[k],false))});
+    ids.forEach(function(k){l.appendChild(conv(k,nicknameOf(k),profiles[k],false))});
   }
   function paintTitle(){
     $("title").textContent=titleOf();
+    var nb=$("nicknameBtn");if(nb)nb.hidden=!room;
     var cl=$("conversationLabel");
     if(cl)cl.textContent=room?"Private conversation with "+titleOf():"Choose a person to start a private chat";
     $("msg").placeholder=room?"Message "+titleOf()+" privately…":"Select a member to start a private chat";
@@ -749,7 +758,7 @@ body #msg { background:rgba(128,128,128,.10) !important; }
           knownMessageIds[r+"/"+ch.doc.id]=true;
         }
       });
-      msgs=s.docs.map(function(d){var v=d.data();return {id:d.id,uid:v.uid,text:v.text,t:v.t,replyTo:v.replyTo||null,readBy:Array.isArray(v.readBy)?v.readBy:[]}}).reverse();
+      msgs=s.docs.map(function(d){var v=d.data();return {id:d.id,uid:v.uid,text:v.text,t:v.t,attachment:v.attachment||null,replyTo:v.replyTo||null,readBy:Array.isArray(v.readBy)?v.readBy:[]}}).reverse();
       hasMore=s.size>=limitN;
       firstSnapshotByRoom[r]=true;
       isInitialSnapshot=false;
@@ -885,6 +894,7 @@ body #msg { background:rgba(128,128,128,.10) !important; }
       }
       removeQuickbarReplyButtons();
       col.appendChild(quick);col.appendChild(b);
+      if(m.attachment&&m.attachment.data){if(/^image\//.test(m.attachment.type||"")){var ai=document.createElement("img");ai.className="attachment";ai.src=m.attachment.data;ai.alt=m.attachment.name||"Attached image";col.appendChild(ai)}var al=document.createElement("a");al.className="attachment-link";al.href=m.attachment.data;al.download=m.attachment.name||"attachment";al.textContent="📎 "+(m.attachment.name||"Download attachment");al.target="_blank";al.rel="noopener";col.appendChild(al)}
       var hoverTimer=null;
       row.addEventListener("mouseenter",function(){clearTimeout(hoverTimer);hoverTimer=setTimeout(function(){row.classList.add("menu-ready")},1000)});
       row.addEventListener("mouseleave",function(){clearTimeout(hoverTimer);row.classList.remove("menu-ready");if(!row.classList.contains("show-reactions"))closeMessageMenu(row)});
@@ -942,19 +952,51 @@ body #msg { background:rgba(128,128,128,.10) !important; }
   $("muteBtn").addEventListener("click",function(){if(!room)return;if(mutedChats[room])delete mutedChats[room];else mutedChats[room]=true;saveUserMap("chatboxMuted",mutedChats);paintTitle();toast(mutedChats[room]?"Notifications muted for this chat.":"Notifications enabled for this chat.")});
   $("jumpLatest").addEventListener("click",function(){var th=$("thread");th.scrollTop=th.scrollHeight;$("jumpLatest").hidden=true});
   $("thread").addEventListener("scroll",function(){var th=$("thread");$("jumpLatest").hidden=th.scrollHeight-th.scrollTop-th.clientHeight<160||!!searchQuery},{passive:true});
-  function send(){
+  function send(attachment){
     var ta=$("msg"),v=ta.value.trim();
-    if(!v||!mine||!db||!room)return;
+    if((!v&&!attachment)||!mine||!db||!room)return;
     var payload={uid:uid,text:v.slice(0,2000),t:Date.now(),readBy:[]};
+    if(attachment)payload.attachment=attachment;
     if(replyTarget)payload.replyTo={id:replyTarget.id,uid:replyTarget.uid,name:replyTarget.name,text:replyTarget.text};
-    var sentReply=replyTarget;
-    ta.value="";fit();stickNext=true;
+    var sentReply=replyTarget,oldText=ta.value;
+    if(v)ta.value="";fit();stickNext=true;
     collFor(room).add(payload).then(function(){
       if(replyTarget===sentReply){replyTarget=null;$("replyPreview").hidden=true;}
     }).catch(function(){
-      ta.value=v;fit();toast("Couldn’t send that message.");
+      ta.value=oldText;fit();toast("Couldn’t send that message.");
     });
   }
+  function fileToAttachment(file){
+    return new Promise(function(resolve,reject){
+      if(!file)return reject(new Error("No file selected."));
+      if(file.size>280*1024)return reject(new Error("Please choose a file smaller than 280 KB."));
+      var reader=new FileReader();reader.onload=function(){resolve({name:file.name,type:file.type||"application/octet-stream",data:String(reader.result)})};reader.onerror=reject;reader.readAsDataURL(file);
+    });
+  }
+  $("attachBtn").addEventListener("click",function(){if(!room){toast("Open a private chat first.");return}$("attachInput").click()});
+  $("attachInput").addEventListener("change",function(){var file=this.files&&this.files[0];this.value="";if(!file)return;fileToAttachment(file).then(function(a){send(a)}).catch(function(e){toast(e.message||"Couldn’t read that file.")})});
+  var cameraStream=null;
+  function stopCamera(){if(cameraStream){cameraStream.getTracks().forEach(function(t){t.stop()});cameraStream=null}$("cameraVideo").srcObject=null;$("cameraModal").hidden=true}
+  $("cameraBtn").addEventListener("click",function(){
+    if(!room){toast("Open a private chat first.");return}
+    if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){toast("Live camera is not available in this browser. Try the 📎 button to choose a photo.");return}
+    $("cameraError").textContent="";$("cameraModal").hidden=false;
+    navigator.mediaDevices.getUserMedia({video:{facingMode:"environment"},audio:false}).then(function(stream){cameraStream=stream;$("cameraVideo").srcObject=stream}).catch(function(){$("cameraError").textContent="Camera access was blocked or unavailable. Check browser permissions."});
+  });
+  $("cameraCancel").addEventListener("click",stopCamera);
+  $("cameraCapture").addEventListener("click",function(){
+    var v=$("cameraVideo");if(!cameraStream||!v.videoWidth){$("cameraError").textContent="Camera is not ready yet.";return}
+    var c=document.createElement("canvas"),scale=Math.min(1,900/v.videoWidth);c.width=Math.round(v.videoWidth*scale);c.height=Math.round(v.videoHeight*scale);c.getContext("2d").drawImage(v,0,0,c.width,c.height);
+    var data=c.toDataURL("image/jpeg",0.68);if(data.length>360000){$("cameraError").textContent="Photo is too large. Try again closer or with less detail.";return}
+    stopCamera();send({name:"camera-"+Date.now()+".jpg",type:"image/jpeg",data:data});
+  });
+  $("nicknameBtn").addEventListener("click",function(){
+    if(!room)return;var current=nickMap(),existing=current[room]||"",value=window.prompt("Nickname for "+nameOf(profiles[room])+":",existing);
+    if(value===null)return;value=value.trim();if(value.length>40){toast("Nicknames must be 40 characters or fewer.");return}
+    if(value)value=current[room]=value;else delete current[room];
+    try{localStorage.setItem("chatboxNicknames:"+uid,JSON.stringify(current))}catch(e){toast("Couldn’t save nickname in this browser.");return}
+    paintSide();paintTitle();toast(value?"Nickname saved on this device.":"Nickname cleared.");
+  });
 
   /* profile */
   function paintPick(){
