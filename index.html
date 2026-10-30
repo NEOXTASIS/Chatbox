@@ -509,16 +509,33 @@ button:focus-visible{outline:2px solid #fff;outline-offset:2px}
         target.classList.remove("show-reactions");
         if(menuCloseTimer!==null){clearTimeout(menuCloseTimer);menuCloseTimer=null;}
       }
-      // Keep the menu open while the pointer is over the emoji/options bar.
-      quick.addEventListener("mouseenter",function(){
+      // Pause auto-close while the pointer/finger is interacting with the menu.
+      // The quickbar is fixed-positioned, so the row may receive mouseleave while
+      // the pointer is still over an emoji; track the quickbar independently.
+      var menuPointerInside=false;
+      function pauseMenuClose(){
+        menuPointerInside=true;
         if(menuCloseTimer!==null){clearTimeout(menuCloseTimer);menuCloseTimer=null;}
-      });
-      quick.addEventListener("mouseleave",function(){
+      }
+      function resumeMenuClose(){
+        menuPointerInside=false;
         if(row.classList.contains("show-reactions")){
           if(menuCloseTimer!==null)clearTimeout(menuCloseTimer);
-          menuCloseTimer=setTimeout(function(){closeMessageMenu(row)},1500);
+          menuCloseTimer=setTimeout(function(){
+            if(!menuPointerInside)closeMessageMenu(row);
+          },1500);
         }
-      });
+      }
+      quick.addEventListener("pointerenter",pauseMenuClose);
+      quick.addEventListener("pointerleave",resumeMenuClose);
+      // Touch users should be able to press/slide onto an emoji without the timer
+      // closing the bar before the tap/click is completed.
+      quick.addEventListener("touchstart",pauseMenuClose,{passive:true});
+      quick.addEventListener("touchend",function(){
+        // Allow the resulting click to fire before restarting the timer.
+        setTimeout(resumeMenuClose,350);
+      },{passive:true});
+      quick.addEventListener("touchcancel",resumeMenuClose,{passive:true});
       var dots=el("button","dots-action","⋯");dots.type="button";dots.title="Message options";dots.setAttribute("aria-label","Open message options");
       dots.onclick=function(ev){
         ev.stopPropagation();
@@ -526,7 +543,8 @@ button:focus-visible{outline:2px solid #fff;outline-offset:2px}
         row.classList.add("show-reactions");
         positionQuickbar();
         if(menuCloseTimer!==null)clearTimeout(menuCloseTimer);
-        menuCloseTimer=setTimeout(function(){closeMessageMenu(row)},1500);
+        menuPointerInside=quick.matches(":hover");
+        if(!menuPointerInside){menuCloseTimer=setTimeout(function(){if(!menuPointerInside)closeMessageMenu(row)},1500);}
       };
       col.appendChild(dots);
       function quoteMessage(){var ta=$("msg");ta.value="↪ "+String(nameOf(profiles[m.uid]))+": "+String(m.text||"").split("\n")[0].slice(0,160)+"\n"+ta.value;ta.focus();fit();closeMessageMenu(row)}
