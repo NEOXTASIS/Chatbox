@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="robots" content="noindex, nofollow">
 <meta name="referrer" content="no-referrer">
-<meta name="theme-color" content="#050505">
+<meta name="theme-color" content="#080a12">
 <meta name="color-scheme" content="dark">
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://www.gstatic.com https://apis.google.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://*.firebaseapp.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com wss://*.firebaseio.com; frame-src https://*.firebaseapp.com https://accounts.google.com; base-uri 'self'; form-action 'self'; object-src 'none'">
 <title>Chatbox</title>
@@ -199,6 +199,106 @@ body.theme-light{--bg:#f0f0f0;--win:#fff;--ink:#171717;--muted:#666;--dim:#85858
   .row .bub{touch-action:pan-y}
 }
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+
+/* Modern ambient refresh: soft glass surfaces, richer color, and fluid organic light. */
+:root{
+  --bg:#080a12;--win:#0c101c;--ink:#f5f7ff;--muted:#a0a9c0;--dim:#717c96;
+  --hover:rgba(255,255,255,.075);--accent:#9b8cff;--accent-2:#63d7cf;
+}
+body{background:var(--bg);letter-spacing:.005em}
+.bg{
+  background:
+    radial-gradient(ellipse at 12% 18%,rgba(103,91,255,.17),transparent 38%),
+    radial-gradient(ellipse at 86% 72%,rgba(52,207,196,.12),transparent 34%),
+    radial-gradient(ellipse at 55% 0%,rgba(255,128,174,.09),transparent 32%),
+    var(--bg);
+}
+.bg:after{
+  content:"";position:absolute;inset:-10%;pointer-events:none;opacity:.6;
+  background:
+    radial-gradient(ellipse 30% 23% at 17% 24%,rgba(125,105,255,.12),transparent 72%),
+    radial-gradient(ellipse 24% 33% at 83% 30%,rgba(76,213,202,.09),transparent 70%),
+    radial-gradient(ellipse 31% 20% at 65% 88%,rgba(255,125,167,.08),transparent 72%);
+  filter:blur(28px);animation:ambient-drift 24s ease-in-out infinite alternate;
+}
+@keyframes ambient-drift{from{transform:translate3d(-1%,0,0) scale(1)}to{transform:translate3d(1.5%,-1%,0) scale(1.05)}}
+.home .mark,.pending .mark{background:linear-gradient(135deg,#b7a8ff,#6ee5d8);color:#101323;box-shadow:0 8px 28px rgba(132,116,255,.25)}
+.home h1{letter-spacing:-.055em;text-shadow:0 8px 45px rgba(137,119,255,.16)}
+.home .tag{font-size:14px}
+.field{border:1px solid rgba(255,255,255,.09);background:rgba(20,24,42,.64);backdrop-filter:blur(18px);box-shadow:inset 0 1px rgba(255,255,255,.035);text-align:left;transition:border-color .2s,background .2s,box-shadow .2s}
+.field:focus{border-color:rgba(164,149,255,.7);background:rgba(27,30,52,.85);box-shadow:0 0 0 4px rgba(142,124,255,.12)}
+.btn{border:1px solid rgba(255,255,255,.075);background:rgba(255,255,255,.055);transition:transform .18s ease,background .18s ease,border-color .18s ease,box-shadow .18s ease}
+.btn.primary{border:0;background:linear-gradient(120deg,#c0b2ff,#7bdece);color:#101323;box-shadow:0 8px 24px rgba(123,128,255,.16)}
+.btn.primary:hover{box-shadow:0 12px 30px rgba(123,128,255,.25)}
+.linkbtn{color:#c5bbff}
+.pending,.win{background:rgba(12,16,28,.78);backdrop-filter:blur(26px) saturate(130%);-webkit-backdrop-filter:blur(26px) saturate(130%)}
+.pending{border:1px solid rgba(255,255,255,.11);box-shadow:0 28px 90px rgba(0,0,0,.38)}
+.win{border-top:1px solid rgba(255,255,255,.075)}
+.side{background:rgba(11,15,27,.68);border-right:1px solid rgba(255,255,255,.075)}
+.side-head{padding:20px 18px 12px}
+.brand{font-size:13px;letter-spacing:.055em}
+.brand .mark{background:linear-gradient(135deg,#b7a8ff,#6ee5d8);color:#101323}
+.side-label{color:#8792ae;font-size:10px;letter-spacing:.15em;font-weight:800}
+.side-search{border:1px solid rgba(255,255,255,.075);background:rgba(255,255,255,.045);border-radius:14px;padding:11px 13px;transition:border-color .2s,background .2s}
+.side-search:focus{border-color:rgba(164,149,255,.6);background:rgba(255,255,255,.07)}
+.list{padding:8px}
+.conv{padding:10px;border-radius:14px;gap:11px}
+.conv:hover{background:rgba(255,255,255,.055)}
+.conv.on{background:linear-gradient(100deg,rgba(145,128,255,.19),rgba(96,218,204,.075));box-shadow:inset 2px 0 #a89aff}
+.av{background:linear-gradient(135deg,#292b4b,#1c4245);border:1px solid rgba(255,255,255,.09)}
+.main{background:linear-gradient(145deg,rgba(19,23,39,.34),rgba(10,13,23,.16))}
+.head{padding:16px 20px;border-bottom:1px solid rgba(255,255,255,.055);background:rgba(10,13,24,.24)}
+.title{font-size:13px;letter-spacing:.015em}
+.me{border:1px solid rgba(255,255,255,.055);background:rgba(255,255,255,.025)}
+.head-tool,.alerts-btn{border:1px solid rgba(255,255,255,.065);background:rgba(255,255,255,.045);transition:background .2s,border-color .2s}
+.head-tool:hover,.alerts-btn:hover{background:rgba(255,255,255,.09);border-color:rgba(255,255,255,.13)}
+.thread{scrollbar-color:#34364f transparent}
+.empty{color:#929bb4}
+.day{padding:4px 12px;border:1px solid rgba(255,255,255,.07);border-radius:999px;background:rgba(255,255,255,.035);font-size:11px}
+.meta{color:#8d98b4;font-size:11px}
+.bub{background:rgba(34,39,59,.9);border:1px solid rgba(255,255,255,.055);box-shadow:0 5px 18px rgba(0,0,0,.09);padding:10px 14px;border-radius:18px 18px 18px 6px}
+.row.mine .bub{background:linear-gradient(135deg,#c6baff,#8de6d8);border:0;color:#111527;box-shadow:0 6px 22px rgba(114,136,255,.13)}
+.row .bub:hover{box-shadow:0 8px 24px rgba(0,0,0,.18)}
+.react{border-color:rgba(255,255,255,.09);background:rgba(23,27,44,.9)}
+.react.active{border-color:rgba(176,163,255,.75);background:rgba(147,129,255,.2)}
+.reply-preview{background:rgba(22,27,44,.72);border-left-color:#a99aff}
+.reply-quote{background:rgba(255,255,255,.065);border-left-color:#a99aff}
+.composer{padding:12px 20px max(18px,env(safe-area-inset-bottom,0px));background:linear-gradient(180deg,transparent,rgba(9,12,22,.44))}
+.emoji-toggle{border:1px solid rgba(255,255,255,.06);background:rgba(255,255,255,.055)}
+#msg{border:1px solid rgba(255,255,255,.07);background:rgba(24,29,47,.88);box-shadow:inset 0 1px rgba(255,255,255,.035);transition:border-color .2s,box-shadow .2s}
+#msg:focus{border-color:rgba(164,149,255,.45);box-shadow:0 0 0 3px rgba(142,124,255,.08)}
+.send{background:linear-gradient(135deg,#c2b4ff,#7ce1d4);color:#101323;box-shadow:0 7px 20px rgba(129,120,255,.17)}
+.send:hover{box-shadow:0 10px 28px rgba(129,120,255,.28)}
+.card{background:rgba(17,21,36,.96);border:1px solid rgba(255,255,255,.09);border-radius:24px;backdrop-filter:blur(24px)}
+.pick{background:linear-gradient(135deg,#302e55,#20504e)}
+.toast{background:linear-gradient(120deg,#c0b2ff,#7bdece);color:#101323;box-shadow:0 10px 32px rgba(0,0,0,.3)}
+.jump-latest{background:linear-gradient(120deg,#c0b2ff,#7bdece);color:#101323;border:0}
+body.theme-light{
+  --bg:#f2f4fb;--win:#fff;--ink:#1c2032;--muted:#606984;--dim:#8790a8;--hover:rgba(28,32,50,.065);
+  background:var(--bg)
+}
+body.theme-light .bg{background:radial-gradient(ellipse at 12% 18%,rgba(126,108,255,.16),transparent 38%),radial-gradient(ellipse at 86% 72%,rgba(52,207,196,.12),transparent 34%),#f2f4fb}
+body.theme-light .win{background:rgba(255,255,255,.76)}
+body.theme-light .side{background:rgba(248,249,255,.78);border-color:rgba(35,40,70,.08)}
+body.theme-light .main{background:rgba(255,255,255,.35)}
+body.theme-light .head{background:rgba(255,255,255,.48);border-color:rgba(35,40,70,.07)}
+body.theme-light .side-search,body.theme-light #msg{background:rgba(245,246,252,.9);border-color:rgba(35,40,70,.1)}
+body.theme-light .field{background:rgba(255,255,255,.8);color:#171a2a;border-color:rgba(35,40,70,.12)}
+body.theme-light .bub{background:#e9ebf5;color:#1c2032;border-color:rgba(35,40,70,.05)}
+body.theme-light .row.mine .bub{background:linear-gradient(135deg,#6b5ce7,#4fc6b9);color:white}
+body.theme-light .card{background:rgba(255,255,255,.96);border-color:rgba(35,40,70,.1)}
+body.theme-light .head-tool,body.theme-light .alerts-btn{color:#252941;background:rgba(35,40,70,.045)}
+body.theme-light .react{background:rgba(35,40,70,.04);border-color:rgba(35,40,70,.08)}
+body.theme-light .reply-preview{background:rgba(35,40,70,.045);border-left-color:#7467e9}
+body.theme-light .reply-quote{background:rgba(35,40,70,.07);border-left-color:#7467e9}
+body.theme-light .emoji-picker{background:#fff;border-color:rgba(35,40,70,.12)}
+@media(max-width:760px){
+  .side{background:rgba(12,16,29,.97);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px)}
+  .head{padding:12px}
+  .composer{padding:10px 12px max(14px,env(safe-area-inset-bottom,0px))}
+}
+@media(prefers-reduced-motion:reduce){.bg:after{animation:none}}
+
 </style>
 </head>
 <body>
@@ -206,9 +306,9 @@ body.theme-light{--bg:#f0f0f0;--win:#fff;--ink:#171717;--muted:#666;--dim:#85858
 <div class="bg" aria-hidden="true">
   <svg viewBox="0 0 1000 1000" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
     <defs>
-      <linearGradient id="g1" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffffff" stop-opacity=".95"/><stop offset="1" stop-color="#6b6b6b" stop-opacity=".55"/></linearGradient>
-      <linearGradient id="g2" x1="1" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#d9d9d6"/><stop offset="1" stop-color="#2a2a2a"/></linearGradient>
-      <linearGradient id="g3" x1="0" y1="1" x2="1" y2="0"><stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#555"/></linearGradient>
+      <linearGradient id="g1" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#b9adff" stop-opacity=".95"/><stop offset="1" stop-color="#4cd9ce" stop-opacity=".55"/></linearGradient>
+      <linearGradient id="g2" x1="1" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#7de6d8"/><stop offset="1" stop-color="#51458f"/></linearGradient>
+      <linearGradient id="g3" x1="0" y1="1" x2="1" y2="0"><stop offset="0" stop-color="#ffb2d0"/><stop offset="1" stop-color="#7168d8"/></linearGradient>
       <filter id="blur" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="46"/></filter>
       <filter id="soft" x="-10%" y="-10%" width="120%" height="120%"><feGaussianBlur stdDeviation="1.2"/></filter>
     </defs>
