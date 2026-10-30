@@ -411,6 +411,34 @@ body.theme-light .bg:after {
     radial-gradient(ellipse 34% 25% at 62% 86%,rgba(128,128,128,.10),transparent 72%) !important;
 }
 
+
+/* USER REQUEST: pure black page background and a subtle translucent, blurred chat panel. */
+html { background:#000000 !important; }
+body, body.theme-light { background:#000000 !important; color:#FFFFFF !important; }
+body.theme-light { color-scheme:dark !important; }
+body .bg, body.theme-light .bg { background:#000000 !important; }
+body .bg:after, body.theme-light .bg:after { content:none !important; display:none !important; }
+body .bg svg { display:none !important; }
+body .win, body.theme-light .win {
+  background:rgba(12,12,12,.38) !important;
+  border:1px solid rgba(128,128,128,.18) !important;
+  backdrop-filter:blur(24px) !important;
+  -webkit-backdrop-filter:blur(24px) !important;
+  box-shadow:0 12px 48px rgba(0,0,0,.35) !important;
+}
+body .side, body.theme-light .side {
+  background:rgba(24,24,24,.30) !important;
+  border-right-color:rgba(128,128,128,.20) !important;
+  backdrop-filter:blur(24px) !important;
+  -webkit-backdrop-filter:blur(24px) !important;
+}
+body .main { background:rgba(0,0,0,.12) !important; }
+body .head, body .conversation-label, body .composer {
+  background:rgba(0,0,0,.16) !important;
+  border-color:rgba(128,128,128,.16) !important;
+}
+body #msg { background:rgba(128,128,128,.10) !important; }
+
 </style>
 </head>
 <body>
