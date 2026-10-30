@@ -933,9 +933,7 @@ var b=el("div","bub",m.text);
       col.appendChild(quick);col.appendChild(b);
 if(m.attachment&&m.attachment.data){
         var atype=m.attachment.type||"";
-        if(/^image\//.test(atype)){var ai=document.createElement("img");ai.className="attachment";ai.src=m.attachment.data;ai.alt=m.attachment.name||"Attached image";col.appendChild(ai)}
-        else if(/^audio\//.test(atype)){var au=document.createElement("audio");au.className="voice-player";au.controls=true;au.preload="metadata";au.src=m.attachment.data;col.appendChild(au)}
-        var al=document.createElement("a");al.className="attachment-link";al.href=m.attachment.data;al.download=m.attachment.name||"attachment";al.textContent=/^audio\//.test(atype)?"⬇ Download voice message":"📎 "+(m.attachment.name||"Download attachment");al.target="_blank";al.rel="noopener";col.appendChild(al)
+        if(/^image\//.test(atype)){var ai=document.createElement("img");ai.className="attachment";ai.src=m.attachment.data;ai.alt=m.attachment.name||"Attached image";col.appendChild(ai)}else if(/^audio\//.test(atype)){col.appendChild(makeVoicePlayer(m.attachment.data))}else{var al=document.createElement("a");al.className="attachment-link";al.href=m.attachment.data;al.download=m.attachment.name||"attachment";al.textContent="📎 "+(m.attachment.name||"Download attachment");al.target="_blank";al.rel="noopener";col.appendChild(al)}
       }
       var hoverTimer=null;
       row.addEventListener("mouseenter",function(){clearTimeout(hoverTimer);hoverTimer=setTimeout(function(){row.classList.add("menu-ready")},1000)});
@@ -999,6 +997,8 @@ if(m.attachment&&m.attachment.data){
   $("muteBtn").addEventListener("click",function(){if(!room)return;if(mutedChats[room])delete mutedChats[room];else mutedChats[room]=true;saveUserMap("chatboxMuted",mutedChats);paintTitle();toast(mutedChats[room]?"Notifications muted for this chat.":"Notifications enabled for this chat.")});
   $("jumpLatest").addEventListener("click",function(){var th=$("thread");th.scrollTop=th.scrollHeight;$("jumpLatest").hidden=true});
   $("thread").addEventListener("scroll",function(){var th=$("thread");$("jumpLatest").hidden=th.scrollHeight-th.scrollTop-th.clientHeight<160||!!searchQuery},{passive:true});
+  function formatAudioTime(seconds){if(!isFinite(seconds)||seconds<0)return "0:00";var n=Math.floor(seconds);return Math.floor(n/60)+":"+String(n%60).padStart(2,"0")}
+  function makeVoicePlayer(src){var wrap=document.createElement("div");wrap.className="voice-player";var audio=document.createElement("audio");audio.preload="metadata";audio.src=src;audio.playsInline=true;var play=document.createElement("button");play.type="button";play.className="voice-play";play.textContent="▶";play.setAttribute("aria-label","Play voice message");var wave=document.createElement("div");wave.className="voice-wave";wave.setAttribute("role","slider");wave.setAttribute("aria-label","Voice message position");wave.setAttribute("tabindex","0");for(var i=0;i<32;i++){var bar=document.createElement("span");bar.style.setProperty("--bar",(18+((i*37+i*i*11)%78))+"%");wave.appendChild(bar)}var time=document.createElement("span");time.className="voice-time";time.textContent="0:00";function update(){var d=audio.duration||0,p=d?audio.currentTime/d:0;Array.prototype.forEach.call(wave.children,function(b,i){b.classList.toggle("played",i/Math.max(1,wave.children.length-1)<=p)});time.textContent=audio.ended?formatAudioTime(d):formatAudioTime(audio.currentTime)}play.onclick=function(){if(audio.paused){var p=audio.play();if(p&&p.catch)p.catch(function(){toast("This voice message could not be played in this browser.")})}else audio.pause()};audio.addEventListener("play",function(){play.textContent="Ⅱ"});audio.addEventListener("pause",function(){play.textContent="▶"});audio.addEventListener("timeupdate",update);audio.addEventListener("loadedmetadata",update);audio.addEventListener("ended",update);wave.addEventListener("click",function(ev){var r=wave.getBoundingClientRect();if(audio.duration)audio.currentTime=Math.max(0,Math.min(1,(ev.clientX-r.left)/r.width))*audio.duration});wrap.appendChild(play);wrap.appendChild(wave);wrap.appendChild(time);wrap.appendChild(audio);audio.style.display="none";return wrap}
   function extractYouTubeId(text){
     var raw=String(text||"");
     var match=raw.match(/(?:https?:\/\/)?(?:www\.|m\.)?(?:youtube\.com\/(?:watch\?(?:[^#\s]*&)?v=|embed\/|shorts\/|live\/)|youtu\.be\/)([A-Za-z0-9_-]{11})/i);
@@ -1006,17 +1006,14 @@ if(m.attachment&&m.attachment.data){
   }
   function send(attachment){
     var ta=$("msg"),v=ta.value.trim();
-    if((!v&&!attachment)||!mine||!db||!room)return;
-    var payload={uid:uid,text:(v?v.slice(0,2000):(attachment?"📎 Attachment":"")),t:Date.now(),readBy:[]};
+    if((!v&&!attachment)||!mine||!db||!room)return Promise.resolve(false);
+    var attachmentLabel=attachment&&/^audio\//.test(attachment.type||"")?"🎙️ Voice message":attachment&&/^image\//.test(attachment.type||"")?"📷 Photo":attachment?"📎 Attachment":"";
+    var payload={uid:uid,text:(v?v.slice(0,2000):attachmentLabel),t:Date.now(),readBy:[]};
     if(attachment)payload.attachment=attachment;
     if(replyTarget)payload.replyTo={id:replyTarget.id,uid:replyTarget.uid,name:replyTarget.name,text:replyTarget.text};
     var sentReply=replyTarget,oldText=ta.value;
     if(v)ta.value="";fit();stickNext=true;
-    collFor(room).add(payload).then(function(){
-      if(replyTarget===sentReply){replyTarget=null;$("replyPreview").hidden=true;}
-    }).catch(function(){
-      ta.value=oldText;fit();toast("Couldn’t send that message.");
-    });
+    return collFor(room).add(payload).then(function(){if(replyTarget===sentReply){replyTarget=null;$("replyPreview").hidden=true;}return true}).catch(function(err){ta.value=oldText;fit();toast("Couldn’t send that message"+(err&&err.code?" ("+err.code+")":"")+".");return false});
   }
   function fileToAttachment(file){
     return new Promise(function(resolve,reject){
@@ -1048,7 +1045,7 @@ if(m.attachment&&m.attachment.data){
     var mime=voiceSupportedMime();
     navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true}}).then(function(stream){
       voiceStream=stream;voiceChunks=[];voiceMime=mime;
-      try{voiceRecorder=mime?new MediaRecorder(stream,{mimeType:mime}):new MediaRecorder(stream)}catch(err){stopVoiceStream();throw err}
+      try{voiceRecorder=mime?new MediaRecorder(stream,{mimeType:mime,audioBitsPerSecond:24000}):new MediaRecorder(stream,{audioBitsPerSecond:24000})}catch(err){try{voiceRecorder=new MediaRecorder(stream)}catch(err2){stopVoiceStream();throw err2}}
       voiceRecorder.ondataavailable=function(ev){if(ev.data&&ev.data.size)voiceChunks.push(ev.data)};
       voiceRecorder.onerror=function(){$("voiceError").textContent="Recording failed. Please try again.";$("voiceRecord").disabled=false;$("voiceSend").disabled=true;stopVoiceStream()};
       voiceRecorder.onstop=function(){
@@ -1058,15 +1055,14 @@ if(m.attachment&&m.attachment.data){
         if(!voiceBlob.size){$("voiceStatus").textContent="No audio captured.";$("voiceSend").disabled=true;return}
         $("voiceStatus").textContent="Recording ready · "+Math.ceil(voiceBlob.size/1024)+" KB";$("voiceSend").disabled=false;
       };
-      voiceRecorder.start();$("voiceRecord").textContent="■ Stop";$("voiceStatus").textContent="Recording… (tap Stop when finished)";$("voiceSend").disabled=true;
-      window.setTimeout(function(){if(voiceRecorder&&voiceRecorder.state==="recording")voiceRecorder.stop()},15000);
+      try{voiceRecorder.start(250)}catch(startErr){stopVoiceStream();$("voiceError").textContent="Could not start recording in this browser. Try again.";$("voiceStatus").textContent="Not recording.";return}$("voiceRecord").textContent="■ Stop";$("voiceStatus").textContent="Recording…";$("voiceSend").disabled=true;window.setTimeout(function(){if(voiceRecorder&&voiceRecorder.state==="recording")voiceRecorder.stop()},10000);
     }).catch(function(err){$("voiceError").textContent=err&&err.name==="NotAllowedError"?"Microphone access was denied. Allow microphone access in browser settings.":"Could not start recording. Try again or attach an audio file.";$("voiceStatus").textContent="Not recording."});
   });
   $("voiceSend").addEventListener("click",function(){
     if(!voiceBlob||voiceBlob.size>280*1024||!room)return;
     var ext=/mp4/i.test(voiceBlob.type)?"m4a":/ogg/i.test(voiceBlob.type)?"ogg":"webm";
     var name="voice-message-"+Date.now()+"."+ext,reader=new FileReader();
-    reader.onload=function(){send({name:name,type:voiceBlob.type||"audio/mp4",data:String(reader.result||"")});closeVoiceModal()};
+    reader.onload=function(){var data=String(reader.result||"");send({name:name,type:voiceBlob.type||"audio/mp4",data:data}).then(function(ok){if(ok)closeVoiceModal();else $("voiceError").textContent="The message was not saved. Check your connection or Firestore permissions, then try again."})};
     reader.onerror=function(){$("voiceError").textContent="Could not prepare the recording. Please try again."};
     reader.readAsDataURL(voiceBlob);
   });
