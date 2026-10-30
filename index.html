@@ -505,9 +505,20 @@ button:focus-visible{outline:2px solid #fff;outline-offset:2px}
         var qb=el("button","react",emoji);qb.type="button";qb.title="React with "+emoji;qb.setAttribute("aria-label","React with "+emoji);
         qb.onclick=function(ev){ev.stopPropagation();toggleReaction(m.id,emoji);closeMessageMenu(row)};quick.appendChild(qb);
       });
-      function closeMessageMenu(target){target.classList.remove("show-reactions");}
+      var menuCloseTimer=null;
+      function closeMessageMenu(target){
+        target.classList.remove("show-reactions");
+        if(menuCloseTimer!==null){clearTimeout(menuCloseTimer);menuCloseTimer=null;}
+      }
       var dots=el("button","dots-action","⋯");dots.type="button";dots.title="Message options";dots.setAttribute("aria-label","Open message options");
-      dots.onclick=function(ev){ev.stopPropagation();row.classList.toggle("show-reactions");if(row.classList.contains("show-reactions"))positionQuickbar()};
+      dots.onclick=function(ev){
+        ev.stopPropagation();
+        if(row.classList.contains("show-reactions")){closeMessageMenu(row);return;}
+        row.classList.add("show-reactions");
+        positionQuickbar();
+        if(menuCloseTimer!==null)clearTimeout(menuCloseTimer);
+        menuCloseTimer=setTimeout(function(){closeMessageMenu(row)},1500);
+      };
       col.appendChild(dots);
       function quoteMessage(){var ta=$("msg");ta.value="↪ "+String(nameOf(profiles[m.uid]))+": "+String(m.text||"").split("\n")[0].slice(0,160)+"\n"+ta.value;ta.focus();fit();closeMessageMenu(row)}
       // Incoming messages are replied to with a right-swipe on mobile; no Reply item in their menu.
