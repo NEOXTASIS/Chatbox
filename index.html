@@ -608,6 +608,19 @@ button:active{transform:scale(.96)}
 .composer-shell>.voice-send-btn:hover{background:rgba(255,255,255,.14)!important;border-color:rgba(255,255,255,.32)!important;transform:translateY(-2px)}
 .composer-shell>.send{order:3!important;flex:0 0 38px!important}
 @media(max-width:480px){.composer-shell>.voice-send-btn{flex-basis:36px!important;width:36px!important;height:36px!important}}
+
+/* Keep composer controls vertically centered and evenly spaced */
+.composer-shell{display:flex!important;align-items:center!important;gap:10px!important;padding-top:8px!important;padding-bottom:8px!important;min-height:56px!important}
+.composer-tools{align-self:center!important;display:flex!important;align-items:center!important;flex:0 0 38px!important}
+#msg{align-self:center!important;min-height:38px!important;height:38px!important;margin:0!important;padding-top:9px!important;padding-bottom:9px!important;box-sizing:border-box!important}
+.composer-shell>.voice-send-btn,.composer-shell>.send{align-self:center!important;flex-shrink:0!important;margin:0!important}
+.composer-shell>.voice-send-btn{display:grid!important;place-items:center!important}
+.composer-shell>.send{display:grid!important;place-items:center!important}
+@media(max-width:480px){
+ .composer-shell{gap:7px!important;min-height:52px!important;padding-top:7px!important;padding-bottom:7px!important}
+ .composer-tools{flex-basis:36px!important}
+ #msg{height:36px!important;min-height:36px!important}
+}
 </style>
 </head>
 <body>
