@@ -247,7 +247,7 @@ button:focus-visible{outline:2px solid #fff;outline-offset:2px}
   var $=function(id){return document.getElementById(id)};
   var PAGE=100;
   var auth=null,db=null,uid=null,isOwner=false,profiles={},msgs=[],mine=null,stickNext=true,newAvatar="",required=false,toastT=null;
-  var unsubs=[],msgUnsub=null,handledDenied=false,room="all",limitN=PAGE,hasMore=false,anchor=null,allowedList=[],pendingList=[],authMode="login",authBusy=false;
+  var unsubs=[],msgUnsub=null,handledDenied=false,room=null,limitN=PAGE,hasMore=false,anchor=null,allowedList=[],pendingList=[],authMode="login",authBusy=false;
   var coarse=!!(window.matchMedia&&matchMedia("(pointer:coarse)").matches);
 
   function el(t,c,x){var e=document.createElement(t);if(c)e.className=c;if(x!=null)e.textContent=x;return e}
@@ -267,9 +267,9 @@ button:focus-visible{outline:2px solid #fff;outline-offset:2px}
   }
   function roomId(a,b){return [a,b].sort().join("_")}
   function collFor(r){
-    return r==="all"?db.collection("messages"):db.collection("dms").doc(roomId(uid,r)).collection("messages");
+    return db.collection("dms").doc(roomId(uid,r)).collection("messages");
   }
-  function titleOf(){return room==="all"?"Everyone":nameOf(profiles[room])}
+  function titleOf(){return room?nameOf(profiles[room]):"Private chats"}
 
   function showHome(msg){
     $("win").hidden=true;$("pending").hidden=true;$("modal").hidden=true;$("mem").hidden=true;$("home").hidden=false;
@@ -285,7 +285,7 @@ button:focus-visible{outline:2px solid #fff;outline-offset:2px}
   function stopListening(){
     unsubs.forEach(function(u){try{u()}catch(e){}});unsubs=[];
     if(msgUnsub){try{msgUnsub()}catch(e){}msgUnsub=null}
-    profiles={};msgs=[];mine=null;allowedList=[];room="all";limitN=PAGE;hasMore=false;anchor=null;
+    profiles={};msgs=[];mine=null;allowedList=[];room=null;limitN=PAGE;hasMore=false;anchor=null;
   }
 
   /* sidebar */
@@ -301,15 +301,14 @@ button:focus-visible{outline:2px solid #fff;outline-offset:2px}
   }
   function paintSide(){
     var l=$("list");l.textContent="";
-    l.appendChild(conv("all","Everyone",null,true));
     var ids=Object.keys(profiles).filter(function(k){return k!==uid}).sort(function(a,b){
       return nameOf(profiles[a]).toLowerCase()<nameOf(profiles[b]).toLowerCase()?-1:1});
-    if(!ids.length)l.appendChild(el("div","side-empty","No one else has joined yet."));
+    if(!ids.length)l.appendChild(el("div","side-empty","No other approved members yet."));
     ids.forEach(function(k){l.appendChild(conv(k,nameOf(profiles[k]),profiles[k],false))});
   }
   function paintTitle(){
     $("title").textContent=titleOf();
-    $("msg").placeholder=room==="all"?"Message everyone…":"Message "+titleOf()+"…";
+    $("msg").placeholder=room?"Message "+titleOf()+" privately…":"Select a member to start a private chat";
   }
   function paintMe(){
     var b=$("me");b.textContent="";
@@ -321,16 +320,18 @@ button:focus-visible{outline:2px solid #fff;outline-offset:2px}
   function subscribeMsgs(){
     if(msgUnsub){try{msgUnsub()}catch(e){}msgUnsub=null}
     var r=room;
+    if(!r){msgs=[];render();return}
     msgUnsub=collFor(r).orderBy("t","desc").limit(limitN).onSnapshot(function(s){
       if(r!==room)return;
       msgs=s.docs.map(function(d){var v=d.data();return {id:d.id,uid:v.uid,text:v.text,t:v.t}}).reverse();
       hasMore=s.size>=limitN;
       render();
     },function(){
-      if(r==="all")denied();else toast("Couldn’t open this chat.");
+      toast("Couldn’t open this private chat.");
     });
   }
   function switchRoom(r){
+    if(!r||r===uid||!profiles[r])return;
     room=r;limitN=PAGE;msgs=[];hasMore=false;anchor=null;stickNext=true;
     closeSide();paintSide();paintTitle();render();subscribeMsgs();
     if(!coarse)$("msg").focus();
@@ -343,19 +344,20 @@ button:focus-visible{outline:2px solid #fff;outline-offset:2px}
   function render(){
     var th=$("thread"),near=th.scrollHeight-th.scrollTop-th.clientHeight<90;
     th.textContent="";
-    if(!msgs.length){th.appendChild(el("div","empty",room==="all"?"No messages yet. Say hi!":"No messages yet. Say hi to "+titleOf()+"!"));return}
+    if(!room){th.appendChild(el("div","empty","Select a member to start a private conversation. Only you and that member can read its messages."));return}
+    if(!msgs.length){th.appendChild(el("div","empty","No messages yet. Start a private conversation with "+titleOf()+"."));return}
     if(hasMore){var mb=el("button","more","Load older messages");mb.onclick=loadOlder;th.appendChild(mb)}
     var lastDay="",lastU=null,lastT=0;
     msgs.forEach(function(m){
       var d=dy(m.t);
       if(d!==lastDay){th.appendChild(el("div","day",d));lastDay=d;lastU=null}
-      var isMe=m.uid===uid,p=profiles[m.uid],can=isMe||(isOwner&&room==="all");
+      var isMe=m.uid===uid,p=profiles[m.uid],can=isMe;
       var first=!(lastU===m.uid&&m.t-lastT<300000);
       lastU=m.uid;lastT=m.t;
       var row=el("div","row"+(isMe?" mine":"")+(first?" first":"")+(can?" can":""));
       if(!isMe){var w=el("div","avw");if(first)w.appendChild(avatar(p));row.appendChild(w)}
       var col=el("div","col");
-      if(first)col.appendChild(el("div","meta",(isMe||room!=="all")?tm(m.t):nameOf(p)+" • "+tm(m.t)));
+      if(first)col.appendChild(el("div","meta",tm(m.t)));
       var b=el("div","bub",m.text);col.appendChild(b);
       if(can){
         b.onclick=function(){row.classList.toggle("sel")};
@@ -374,7 +376,7 @@ button:focus-visible{outline:2px solid #fff;outline-offset:2px}
   function fit(){var t=$("msg");t.style.height="auto";t.style.height=Math.min(t.scrollHeight,140)+"px"}
   function send(){
     var ta=$("msg"),v=ta.value.trim();
-    if(!v||!mine||!db)return;
+    if(!v||!mine||!db||!room)return;
     ta.value="";fit();stickNext=true;
     collFor(room).add({uid:uid,text:v.slice(0,2000),t:Date.now()}).catch(function(){
       ta.value=v;fit();toast("Couldn’t send that message.");
@@ -484,7 +486,7 @@ button:focus-visible{outline:2px solid #fff;outline-offset:2px}
   function startChat(){
     showChat();
     $("memBtn").hidden=!isOwner;
-    room="all";limitN=PAGE;stickNext=true;
+    room=null;limitN=PAGE;stickNext=true;
     paintSide();paintTitle();render();
     unsubs.push(db.collection("profiles").onSnapshot(function(s){
       profiles={};
@@ -492,7 +494,6 @@ button:focus-visible{outline:2px solid #fff;outline-offset:2px}
       mine=profiles[uid]||null;paintMe();paintSide();paintTitle();render();
       if(!mine&&!s.metadata.fromCache&&$("modal").hidden)openProfile(true);
     },denied));
-    subscribeMsgs();
     if(isOwner){
       unsubs.push(db.collection("allowed").onSnapshot(function(s){
         allowedList=s.docs.map(function(d){return d.id}).sort();paintMem();
