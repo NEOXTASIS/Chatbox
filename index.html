@@ -114,14 +114,15 @@ button:focus-visible{outline:2px solid #fff;outline-offset:2px}
 .react.active{border-color:rgba(255,255,255,.65);background:rgba(255,255,255,.16)}
 .react .count{font-size:11px;color:var(--muted)}
 .row.mine .react.active{border-color:#aaa;background:#333;color:#fff}
-.react-add{font-size:16px;min-width:29px;justify-content:center;color:var(--muted);display:none}
-.row:hover .react-add,.row.show-reactions .react-add,.row:focus-within .react-add{display:inline-flex}
+.dots-action{position:absolute;z-index:6;right:-25px;top:50%;transform:translateY(-50%);width:22px;height:26px;padding:0;border:0;border-radius:7px;background:transparent;color:var(--muted);font-size:17px;line-height:1;opacity:0;visibility:hidden;display:grid;place-items:center;transition:opacity .12s ease,background .12s ease}
+.row:hover .dots-action,.row.show-reactions .dots-action,.row:focus-within .dots-action{opacity:.72;visibility:visible}
+.dots-action:hover,.dots-action:focus-visible{opacity:1!important;background:var(--hover);outline:none}
 .reaction-quickbar{position:absolute;z-index:5;top:-18px;right:8px;display:flex;gap:3px;padding:5px;background:#202020;border:1px solid rgba(255,255,255,.14);border-radius:999px;box-shadow:0 8px 24px rgba(0,0,0,.45);opacity:0;visibility:hidden;transform:translateY(4px);transition:opacity .12s ease,transform .12s ease,visibility .12s}
 .row.mine .reaction-quickbar{right:8px}
 .row:hover .reaction-quickbar,.row.show-reactions .reaction-quickbar,.row:focus-within .reaction-quickbar{opacity:1;visibility:visible;transform:translateY(0)}
 .reaction-quickbar .react{font-size:18px;min-height:32px;min-width:32px;justify-content:center;padding:4px;border:0;background:transparent}
 .reaction-quickbar .react:hover{background:rgba(255,255,255,.16)}
-@media (hover:none),(pointer:coarse){.reaction-quickbar{opacity:0;visibility:hidden;pointer-events:none}.row.show-reactions .reaction-quickbar{opacity:1;visibility:visible;pointer-events:auto;transform:translateY(0)}.row.show-reactions .react-add{display:inline-flex}}
+@media (hover:none),(pointer:coarse){.dots-action{opacity:.55;visibility:visible}.reaction-quickbar{opacity:0;visibility:hidden;pointer-events:none}.row.show-reactions .reaction-quickbar{opacity:1;visibility:visible;pointer-events:auto;transform:translateY(0)}}
 .bub:hover{transform:translateY(-2px);box-shadow:0 8px 22px rgba(0,0,0,.55)}
 .dl{display:none;margin:4px 6px 0;padding:6px 4px;color:var(--danger);font-size:12px}
 .row.can:hover .dl,.row.can.sel .dl{display:block}
@@ -479,6 +480,9 @@ button:focus-visible{outline:2px solid #fff;outline-offset:2px}
         quick.appendChild(qb);
       });
       col.appendChild(quick);col.appendChild(b);
+      var dots=el("button","dots-action","⋯");dots.type="button";dots.title="Message reactions";dots.setAttribute("aria-label","Open message reactions");
+      dots.onclick=function(ev){ev.stopPropagation();row.classList.toggle("show-reactions")};
+      col.appendChild(dots);
       var pressTimer=null,pressTriggered=false;
       function clearPress(){if(pressTimer){clearTimeout(pressTimer);pressTimer=null}}
       b.addEventListener("touchstart",function(){pressTriggered=false;clearPress();pressTimer=setTimeout(function(){pressTriggered=true;row.classList.add("show-reactions")},500)},{passive:true});
@@ -502,9 +506,7 @@ button:focus-visible{outline:2px solid #fff;outline-offset:2px}
         rb.type="button";rb.title="React with "+emoji;rb.appendChild(document.createTextNode(emoji));rb.appendChild(el("span","count",String(count)));
         rb.onclick=function(){toggleReaction(m.id,emoji)};bar.appendChild(rb);
       });
-      var add=el("button","react react-add","＋");add.type="button";add.title="Add a reaction";
-      add.onclick=function(){var menu=col.querySelector(".reaction-menu");if(menu){menu.remove();return}menu=el("div","reactions reaction-menu");REACTION_EMOJIS.forEach(function(emoji){var eb=el("button","react",emoji);eb.type="button";eb.onclick=function(){toggleReaction(m.id,emoji);menu.remove()};menu.appendChild(eb)});col.appendChild(menu)};
-      bar.appendChild(add);col.appendChild(bar);
+      col.appendChild(bar);
       if(can){
         b.onclick=function(){row.classList.toggle("sel")};
         var dl=el("button","dl","Delete");
