@@ -598,6 +598,16 @@ button:active{transform:scale(.96)}
 @keyframes voiceIdleWave{0%,100%{transform:scaleY(.45);opacity:.38}50%{transform:scaleY(.9);opacity:.72}}
 @keyframes voiceLiveWave{0%{transform:scaleY(.22)}100%{transform:scaleY(1.35)}}
 @media(prefers-reduced-motion:reduce){.voice-card .voice-visualizer span{animation:none!important}}
+
+/* Composer order: plus far left, voice beside send, send far right */
+.composer-shell{display:flex!important;align-items:flex-end!important}
+.composer-tools{order:0!important}
+#msg{order:1!important}
+.composer-shell>.voice-send-btn{order:2!important;flex:0 0 38px!important;width:38px!important;height:38px!important;display:grid!important;place-items:center!important;align-self:flex-end!important;padding:0!important;border:1px solid rgba(255,255,255,.17)!important;border-radius:50%!important;background:rgba(255,255,255,.07)!important;color:#f5f5f7!important;box-shadow:none!important;cursor:pointer;transition:transform .22s,background .22s,border-color .22s}
+.composer-shell>.voice-send-btn svg{width:21px;height:21px;display:block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.composer-shell>.voice-send-btn:hover{background:rgba(255,255,255,.14)!important;border-color:rgba(255,255,255,.32)!important;transform:translateY(-2px)}
+.composer-shell>.send{order:3!important;flex:0 0 38px!important}
+@media(max-width:480px){.composer-shell>.voice-send-btn{flex-basis:36px!important;width:36px!important;height:36px!important}}
 </style>
 </head>
 <body>
@@ -689,11 +699,12 @@ button:active{transform:scale(.96)}
             <button id="emojiToggle" class="emoji-toggle line-tool emoji-tool" type="button" aria-label="Add emoji" title="Add emoji"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M8.5 14s1.2 2 3.5 2 3.5-2 3.5-2M9 9.5h.01M15 9.5h.01"/></svg></button>
             <button id="attachBtn" class="emoji-toggle line-tool attach-tool" type="button" aria-label="Attach a file" title="Attach image or file"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m8.5 12.5 6.8-6.8a4 4 0 0 1 5.7 5.7l-9.2 9.2a6 6 0 0 1-8.5-8.5l9.2-9.2"/></svg></button>
             <button id="cameraBtn" class="emoji-toggle line-tool camera-tool" type="button" aria-label="Take a picture" title="Take a picture"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h4l1.5-2h5L16 8h4v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg></button>
-            <button id="voiceBtn" class="emoji-toggle line-tool voice-tool" type="button" aria-label="Record a voice message" title="Record a voice message"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="12" rx="3"/><path d="M5.5 11.5a6.5 6.5 0 0 0 13 0M12 18v3M9 21h6"/></svg></button>
+            
           </div>
         </div>
         <input id="attachInput" type="file" accept="image/*,.pdf,.txt,.doc,.docx,.xls,.xlsx,.zip" hidden>
         <textarea id="msg" rows="1" maxlength="2000" placeholder="Message" aria-label="Write a message"></textarea>
+        <button id="voiceBtn" class="voice-send-btn" type="button" aria-label="Record a voice message" title="Record a voice message"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="12" rx="3"/><path d="M5.5 11.5a6.5 6.5 0 0 0 13 0M12 18v3M9 21h6"/></svg></button>
         <button id="send" class="send" aria-label="Send message"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 19V5M6 11l6-6 6 6"/></svg></button>
       </div>
     </div>
