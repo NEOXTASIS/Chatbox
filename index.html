@@ -345,6 +345,28 @@ body.theme-light .home .mark,body.theme-light .pending .mark,body.theme-light .b
 body.theme-light .linkbtn{color:#111}
 body.theme-light .pick{background:#ddd}
 
+
+/* Final hard override: monochrome only, including controls and any legacy accent rules. */
+:root{--danger:#bdbdbd;--accent:#fff;--accent-2:#aaa}
+body,body.theme-light{accent-color:#888}
+body .bg,body.theme-light .bg{background:#050505}
+body .bg:after,body.theme-light .bg:after{background:radial-gradient(ellipse 30% 23% at 17% 24%,rgba(255,255,255,.045),transparent 72%),radial-gradient(ellipse 24% 33% at 83% 30%,rgba(255,255,255,.03),transparent 70%),radial-gradient(ellipse 31% 20% at 65% 88%,rgba(255,255,255,.025),transparent 72%)}
+body.theme-light .bg{background:#fff}
+body.theme-light .bg:after{background:radial-gradient(ellipse 30% 23% at 17% 24%,rgba(0,0,0,.025),transparent 72%),radial-gradient(ellipse 24% 33% at 83% 30%,rgba(0,0,0,.02),transparent 70%)}
+body .btn.primary,body .send,body .toast,body .jump-latest{background:#fff!important;color:#080808!important}
+body.theme-light .btn.primary,body.theme-light .send,body.theme-light .toast,body.theme-light .jump-latest{background:#111!important;color:#fff!important}
+body .row.mine .bub{background:#f4f4f4!important;color:#090909!important}
+body.theme-light .row.mine .bub{background:#222!important;color:#fff!important}
+body .conv.on{background:rgba(255,255,255,.12)!important;box-shadow:inset 2px 0 #fff!important}
+body.theme-light .conv.on{background:rgba(0,0,0,.08)!important;box-shadow:inset 2px 0 #111!important}
+body .home .mark,body .pending .mark,body .brand .mark{background:#fff!important;color:#080808!important}
+body.theme-light .home .mark,body.theme-light .pending .mark,body.theme-light .brand .mark{background:#111!important;color:#fff!important}
+body .linkbtn{color:#fff!important}
+body.theme-light .linkbtn{color:#111!important}
+body .reply-preview,body .reply-quote{border-left-color:#aaa!important}
+body .field:focus,body .side-search:focus,body #msg:focus{border-color:#aaa!important;box-shadow:0 0 0 3px rgba(255,255,255,.06)!important}
+body.theme-light .field:focus,body.theme-light .side-search:focus,body.theme-light #msg:focus{border-color:#777!important;box-shadow:0 0 0 3px rgba(0,0,0,.05)!important}
+
 </style>
 </head>
 <body>
@@ -352,9 +374,9 @@ body.theme-light .pick{background:#ddd}
 <div class="bg" aria-hidden="true">
   <svg viewBox="0 0 1000 1000" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
     <defs>
-      <linearGradient id="g1" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#b9adff" stop-opacity=".95"/><stop offset="1" stop-color="#4cd9ce" stop-opacity=".55"/></linearGradient>
-      <linearGradient id="g2" x1="1" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#7de6d8"/><stop offset="1" stop-color="#51458f"/></linearGradient>
-      <linearGradient id="g3" x1="0" y1="1" x2="1" y2="0"><stop offset="0" stop-color="#ffb2d0"/><stop offset="1" stop-color="#7168d8"/></linearGradient>
+      <linearGradient id="g1" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffffff" stop-opacity=".95"/><stop offset="1" stop-color="#777777" stop-opacity=".55"/></linearGradient>
+      <linearGradient id="g2" x1="1" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#bdbdbd"/><stop offset="1" stop-color="#333333"/></linearGradient>
+      <linearGradient id="g3" x1="0" y1="1" x2="1" y2="0"><stop offset="0" stop-color="#999999"/><stop offset="1" stop-color="#eeeeee"/></linearGradient>
       <filter id="blur" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="46"/></filter>
       <filter id="soft" x="-10%" y="-10%" width="120%" height="120%"><feGaussianBlur stdDeviation="1.2"/></filter>
     </defs>
