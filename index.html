@@ -1297,6 +1297,19 @@ if(m.attachment&&m.attachment.data){
     var match=raw.match(/(?:https?:\/\/)?(?:www\.|m\.)?(?:youtube\.com\/(?:watch\?(?:[^#\s]*&)?v=|embed\/|shorts\/|live\/)|youtu\.be\/)([A-Za-z0-9_-]{11})/i);
     return match?match[1]:null;
   }
+  function playSendSound(){
+    try{
+      var AC=window.AudioContext||window.webkitAudioContext;
+      if(!AC)return;
+      var ctx=window.chatboxSendAudioContext||(window.chatboxSendAudioContext=new AC());
+      if(ctx.state==="suspended")ctx.resume();
+      var now=ctx.currentTime;
+      var osc=ctx.createOscillator(),gain=ctx.createGain();
+      osc.type="sine";osc.frequency.setValueAtTime(660,now);osc.frequency.exponentialRampToValueAtTime(880,now+0.065);
+      gain.gain.setValueAtTime(0.0001,now);gain.gain.exponentialRampToValueAtTime(0.075,now+0.012);gain.gain.exponentialRampToValueAtTime(0.0001,now+0.12);
+      osc.connect(gain);gain.connect(ctx.destination);osc.start(now);osc.stop(now+0.13);
+    }catch(e){}
+  }
   function send(attachment){
     var ta=$("msg"),v=ta.value.trim();
     if((!v&&!attachment)||!mine||!db||!room)return Promise.resolve(false);
@@ -1306,7 +1319,7 @@ if(m.attachment&&m.attachment.data){
     if(replyTarget)payload.replyTo={id:replyTarget.id,uid:replyTarget.uid,name:replyTarget.name,text:replyTarget.text};
     var sentReply=replyTarget,oldText=ta.value;
     if(v)ta.value="";fit();stickNext=true;
-    return collFor(room).add(payload).then(function(){if(replyTarget===sentReply){replyTarget=null;$("replyPreview").hidden=true;}return true}).catch(function(err){ta.value=oldText;fit();toast("Couldn’t send that message"+(err&&err.code?" ("+err.code+")":"")+".");return false});
+    return collFor(room).add(payload).then(function(){if(replyTarget===sentReply){replyTarget=null;$("replyPreview").hidden=true;}playSendSound();return true}).catch(function(err){ta.value=oldText;fit();toast("Couldn’t send that message"+(err&&err.code?" ("+err.code+")":"")+".");return false});
   }
   function fileToAttachment(file){
     return new Promise(function(resolve,reject){
