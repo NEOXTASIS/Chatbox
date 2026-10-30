@@ -967,7 +967,7 @@ body #msg { background:rgba(128,128,128,.10) !important; }
   function send(attachment){
     var ta=$("msg"),v=ta.value.trim();
     if((!v&&!attachment)||!mine||!db||!room)return;
-    var payload={uid:uid,text:v.slice(0,2000),t:Date.now(),readBy:[]};
+    var payload={uid:uid,text:(v?v.slice(0,2000):(attachment?"📎 Attachment":"")),t:Date.now(),readBy:[]};
     if(attachment)payload.attachment=attachment;
     if(replyTarget)payload.replyTo={id:replyTarget.id,uid:replyTarget.uid,name:replyTarget.name,text:replyTarget.text};
     var sentReply=replyTarget,oldText=ta.value;
