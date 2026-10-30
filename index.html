@@ -931,7 +931,7 @@ var b=el("div","bub",m.text);
         quick.appendChild(deleteBtn);
       }
       removeQuickbarReplyButtons();
-      col.appendChild(quick);col.appendChild(b);
+      col.appendChild(quick);if(!(m.attachment&&m.attachment.data&&/^(?:📎 Attachment|🎙️ Voice message|📷 Photo|camera-.*\.jpg)$/i.test((m.text||"").trim())))col.appendChild(b);
 if(m.attachment&&m.attachment.data){
         var atype=m.attachment.type||"";
         if(/^image\//.test(atype)){var ai=document.createElement("img");ai.className="attachment";ai.src=m.attachment.data;ai.alt="Sent image";ai.addEventListener("click",function(){openImageLightbox(m.attachment.data)});col.appendChild(ai)}else if(/^audio\//.test(atype)){col.appendChild(makeVoicePlayer(m.attachment.data))}else{var al=document.createElement("a");al.className="attachment-link";al.href=m.attachment.data;al.download=m.attachment.name||"attachment";al.textContent="📎 "+(m.attachment.name||"Download attachment");al.target="_blank";al.rel="noopener";col.appendChild(al)}
