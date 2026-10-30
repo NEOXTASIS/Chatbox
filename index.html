@@ -465,13 +465,41 @@ body.theme-light .bg:after {
 }
 
 
-/* USER REQUEST: pure black page background and a subtle translucent, blurred chat panel. */
-html { background:#000000 !important; }
-body, body.theme-light { background:#000000 !important; color:#FFFFFF !important; }
-body.theme-light { color-scheme:dark !important; }
-body .bg, body.theme-light .bg { background:#000000 !important; }
-body .bg:after, body.theme-light .bg:after { content:none !important; display:none !important; }
-body .bg svg { display:none !important; }
+/* USER REQUEST: visible monochrome abstract background with translucent panels. */
+html { background:#050505 !important; }
+body { background:#050505 !important; color:#FFFFFF !important; }
+body.theme-light { background:#f8f8f8 !important; color:#111111 !important; color-scheme:light !important; }
+body .bg {
+  display:block !important; visibility:visible !important; opacity:1 !important;
+  position:fixed !important; inset:0 !important; z-index:0 !important; overflow:hidden !important;
+  background:
+    radial-gradient(ellipse 78% 58% at 12% 18%,rgba(220,220,220,.30),transparent 72%),
+    radial-gradient(ellipse 65% 64% at 88% 38%,rgba(255,255,255,.18),transparent 72%),
+    radial-gradient(ellipse 68% 48% at 60% 94%,rgba(160,160,160,.24),transparent 72%),
+    #050505 !important;
+}
+body .bg:after {
+  content:"" !important; display:block !important; position:absolute !important; inset:-5% !important;
+  filter:blur(24px); pointer-events:none;
+  background:
+    radial-gradient(ellipse 42% 34% at 22% 26%,rgba(190,190,190,.20),transparent 74%),
+    radial-gradient(ellipse 38% 42% at 78% 34%,rgba(255,255,255,.12),transparent 74%),
+    radial-gradient(ellipse 42% 32% at 62% 82%,rgba(145,145,145,.20),transparent 74%) !important;
+}
+body .bg svg { display:block !important; visibility:visible !important; opacity:1 !important; }
+body.theme-light .bg {
+  background:
+    radial-gradient(ellipse 78% 58% at 12% 18%,rgba(70,70,70,.17),transparent 72%),
+    radial-gradient(ellipse 65% 64% at 88% 38%,rgba(0,0,0,.09),transparent 72%),
+    radial-gradient(ellipse 68% 48% at 60% 94%,rgba(90,90,90,.13),transparent 72%),
+    #f8f8f8 !important;
+}
+body.theme-light .bg:after {
+  background:
+    radial-gradient(ellipse 42% 34% at 22% 26%,rgba(70,70,70,.13),transparent 74%),
+    radial-gradient(ellipse 38% 42% at 78% 34%,rgba(0,0,0,.07),transparent 74%),
+    radial-gradient(ellipse 42% 32% at 62% 82%,rgba(90,90,90,.12),transparent 74%) !important;
+}
 body .win, body.theme-light .win {
   background:rgba(12,12,12,.38) !important;
   border:1px solid rgba(128,128,128,.18) !important;
