@@ -129,6 +129,9 @@ button:focus-visible{outline:2px solid #fff;outline-offset:2px}
 .row.show-reactions .reaction-quickbar{opacity:1;visibility:visible;pointer-events:auto;transition:opacity .45s ease,visibility 0s}
 .reaction-quickbar .react{font-size:18px;min-height:32px;min-width:32px;justify-content:center;padding:4px;border:0;background:transparent}
 .reaction-quickbar .react:hover{background:rgba(255,255,255,.16)}
+/* Never show a text Reply button inside the emoji/options bar; desktop reply stays as its separate icon. */
+.reaction-quickbar button.reply-action,.reaction-quickbar button.reply-btn,.reaction-quickbar button[data-action="reply"]{display:none!important}
+
 .menu-action{font-size:12px;white-space:nowrap;padding:7px 9px;border-radius:8px;background:rgba(255,255,255,.07);color:#f4f4f2}
 .menu-action:hover{background:rgba(255,255,255,.16)}.menu-action.danger{color:#ff9a91}
 .reactions{align-self:flex-start}.row.mine .reactions{align-self:flex-end}
@@ -517,6 +520,9 @@ button:focus-visible{outline:2px solid #fff;outline-offset:2px}
       }
       var b=el("div","bub",m.text);
       var quick=el("div","reaction-quickbar");
+      // Keep the emoji/options bar reaction-only: remove any legacy text Reply action.
+      function removeQuickbarReplyButtons(){Array.prototype.slice.call(quick.querySelectorAll("button")).forEach(function(btn){if((btn.textContent||"").trim().toLowerCase()==="reply"||btn.getAttribute("aria-label")==="Reply"){btn.remove();}});}
+      removeQuickbarReplyButtons();
       function positionQuickbar(){
         var rect=b.getBoundingClientRect();
         quick.style.left="0px";quick.style.top="0px";
@@ -594,6 +600,7 @@ button:focus-visible{outline:2px solid #fff;outline-offset:2px}
         deleteBtn.onclick=function(ev){ev.stopPropagation();if(!window.confirm("Delete this message? This cannot be undone.")){closeMessageMenu(row);return}collFor(room).doc(m.id).delete().catch(function(){toast("Couldn’t delete that message.")});closeMessageMenu(row)};
         quick.appendChild(deleteBtn);
       }
+      removeQuickbarReplyButtons();
       col.appendChild(quick);col.appendChild(b);
       var hoverTimer=null;
       row.addEventListener("mouseenter",function(){clearTimeout(hoverTimer);hoverTimer=setTimeout(function(){row.classList.add("menu-ready")},1000)});
