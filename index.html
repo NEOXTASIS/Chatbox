@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -87,6 +88,8 @@ button:focus-visible{outline:2px solid #fff;outline-offset:2px}
 .me{display:flex;align-items:center;gap:10px;padding:5px 12px 5px 5px;border-radius:999px;transition:transform .18s ease,background .18s ease,box-shadow .18s ease}
 .me:hover{background:var(--hover);transform:translateY(-2px);box-shadow:0 8px 22px rgba(0,0,0,.5)}
 .me span{font-weight:600;max-width:120px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.alerts-btn{flex:none;padding:9px 12px;border-radius:999px;background:var(--hover);font-size:12px;font-weight:700;white-space:nowrap}
+.receipt{color:var(--dim);font-size:11px;margin:4px 8px 0}
 .av{width:34px;height:34px;flex:none;border-radius:50%;background:#262626;display:grid;place-items:center;font:500 12px var(--display);overflow:hidden}
 .av img{width:100%;height:100%;object-fit:cover;display:block}
 .thread{flex:1;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;padding:6px 20px 16px;display:flex;flex-direction:column;scrollbar-width:thin;scrollbar-color:#2a2a2a transparent}
@@ -202,7 +205,8 @@ button:focus-visible{outline:2px solid #fff;outline-offset:2px}
   <section class="main">
     <header class="head">
       <button id="menu" class="menu" aria-label="Open chats">☰</button>
-      <div id="title" class="title">Everyone</div>
+      <div id="title" class="title">Private chats</div>
+      <button id="alertsBtn" class="alerts-btn" type="button" title="Enable message sounds and browser notifications">Enable alerts</button>
       <button id="me" class="me" hidden aria-label="Edit your profile"></button>
     </header>
     <div id="thread" class="thread" aria-live="polite"></div>
@@ -248,6 +252,7 @@ button:focus-visible{outline:2px solid #fff;outline-offset:2px}
   var PAGE=100;
   var auth=null,db=null,uid=null,isOwner=false,profiles={},msgs=[],mine=null,stickNext=true,newAvatar="",required=false,toastT=null;
   var unsubs=[],msgUnsub=null,handledDenied=false,room=null,limitN=PAGE,hasMore=false,anchor=null,allowedList=[],pendingList=[],authMode="login",authBusy=false;
+  var audioCtx=null,alertsEnabled=false,firstSnapshotByRoom={},knownMessageIds={},lastAlertAt=0;
   var coarse=!!(window.matchMedia&&matchMedia("(pointer:coarse)").matches);
 
   function el(t,c,x){var e=document.createElement(t);if(c)e.className=c;if(x!=null)e.textContent=x;return e}
@@ -316,16 +321,72 @@ button:focus-visible{outline:2px solid #fff;outline-offset:2px}
     b.hidden=false;b.appendChild(avatar(mine));b.appendChild(el("span","",mine.name));
   }
 
+  /* sound and browser notifications */
+  function ding(){
+    if(!alertsEnabled)return;
+    try{
+      var C=window.AudioContext||window.webkitAudioContext;
+      if(!C)return;
+      if(!audioCtx)audioCtx=new C();
+      if(audioCtx.state==="suspended")audioCtx.resume();
+      var osc=audioCtx.createOscillator(),gain=audioCtx.createGain();
+      osc.type="sine";osc.frequency.setValueAtTime(880,audioCtx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(660,audioCtx.currentTime+0.16);
+      gain.gain.setValueAtTime(0.0001,audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.16,audioCtx.currentTime+0.015);
+      gain.gain.exponentialRampToValueAtTime(0.0001,audioCtx.currentTime+0.24);
+      osc.connect(gain);gain.connect(audioCtx.destination);osc.start();osc.stop(audioCtx.currentTime+0.25);
+    }catch(e){}
+  }
+  function enableAlerts(){
+    try{
+      var C=window.AudioContext||window.webkitAudioContext;
+      if(C){if(!audioCtx)audioCtx=new C();if(audioCtx.state==="suspended")audioCtx.resume();}
+      alertsEnabled=true;
+      if("Notification" in window && Notification.permission==="default"){
+        Notification.requestPermission().then(function(){updateAlertsButton()}).catch(function(){});
+      }
+      updateAlertsButton();ding();
+      toast("Message alerts enabled.");
+    }catch(e){toast("Couldn’t enable sound on this browser.")}
+  }
+  function updateAlertsButton(){
+    var b=$("alertsBtn");if(!b)return;
+    b.textContent=alertsEnabled?"Alerts on":"Enable alerts";
+    b.setAttribute("aria-pressed",alertsEnabled?"true":"false");
+  }
+  function notifyMessage(m){
+    if(m.uid===uid)return;
+    var now=Date.now();if(now-lastAlertAt>250){ding();lastAlertAt=now;}
+    if(document.hidden && "Notification" in window && Notification.permission==="granted"){
+      try{new Notification("New message · "+titleOf(),{body:String(m.text||"New message").slice(0,120),tag:"chatbox-"+room});}catch(e){}
+    }
+  }
+
   /* messages */
   function subscribeMsgs(){
     if(msgUnsub){try{msgUnsub()}catch(e){}msgUnsub=null}
     var r=room;
     if(!r){msgs=[];render();return}
+    var isInitialSnapshot=!firstSnapshotByRoom[r];
     msgUnsub=collFor(r).orderBy("t","desc").limit(limitN).onSnapshot(function(s){
       if(r!==room)return;
-      msgs=s.docs.map(function(d){var v=d.data();return {id:d.id,uid:v.uid,text:v.text,t:v.t}}).reverse();
+      var incoming=[];
+      s.docChanges().forEach(function(ch){
+        if(ch.type==="added"){
+          var val=ch.doc.data()||{};
+          if(!isInitialSnapshot && val.uid!==uid && !knownMessageIds[r+"/"+ch.doc.id])incoming.push({id:ch.doc.id,uid:val.uid,text:val.text,t:val.t});
+          knownMessageIds[r+"/"+ch.doc.id]=true;
+        }
+      });
+      msgs=s.docs.map(function(d){var v=d.data();return {id:d.id,uid:v.uid,text:v.text,t:v.t,readBy:Array.isArray(v.readBy)?v.readBy:[]}}).reverse();
       hasMore=s.size>=limitN;
+      firstSnapshotByRoom[r]=true;
+      isInitialSnapshot=false;
       render();
+      // Mark incoming messages as read while this private conversation is open.
+      s.docs.forEach(function(d){var v=d.data()||{};var rb=Array.isArray(v.readBy)?v.readBy:[];if(v.uid!==uid && !rb.includes(uid))d.ref.update({readBy:firebase.firestore.FieldValue.arrayUnion(uid)}).catch(function(){});});
+      incoming.forEach(notifyMessage);
     },function(){
       toast("Couldn’t open this private chat.");
     });
@@ -359,6 +420,10 @@ button:focus-visible{outline:2px solid #fff;outline-offset:2px}
       var col=el("div","col");
       if(first)col.appendChild(el("div","meta",tm(m.t)));
       var b=el("div","bub",m.text);col.appendChild(b);
+      if(isMe){
+        var recipientRead=Array.isArray(m.readBy)&&m.readBy.indexOf(room)!==-1;
+        col.appendChild(el("div","receipt",recipientRead?"Read":"Sent"));
+      }
       if(can){
         b.onclick=function(){row.classList.toggle("sel")};
         var dl=el("button","dl","Delete");
@@ -378,7 +443,7 @@ button:focus-visible{outline:2px solid #fff;outline-offset:2px}
     var ta=$("msg"),v=ta.value.trim();
     if(!v||!mine||!db||!room)return;
     ta.value="";fit();stickNext=true;
-    collFor(room).add({uid:uid,text:v.slice(0,2000),t:Date.now()}).catch(function(){
+    collFor(room).add({uid:uid,text:v.slice(0,2000),t:Date.now(),readBy:[]}).catch(function(){
       ta.value=v;fit();toast("Couldn’t send that message.");
     });
   }
@@ -504,6 +569,7 @@ button:focus-visible{outline:2px solid #fff;outline-offset:2px}
   }
 
   /* events */
+  $("alertsBtn").onclick=enableAlerts;
   $("msg").oninput=fit;
   $("msg").onkeydown=function(e){if(e.key==="Enter"&&!e.shiftKey&&!coarse){e.preventDefault();send()}};
   $("send").onclick=function(){send();if(!coarse)$("msg").focus()};
@@ -600,3 +666,4 @@ button:focus-visible{outline:2px solid #fff;outline-offset:2px}
 </script>
 </body>
 </html>
+⋮⋮⋮⋮
