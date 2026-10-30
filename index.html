@@ -299,6 +299,20 @@ body.theme-light .emoji-picker{background:#fff;border-color:rgba(35,40,70,.12)}
 }
 @media(prefers-reduced-motion:reduce){.bg:after{animation:none}}
 
+
+/* Conversation identity sits below the header controls for quick context. */
+.conversation-label{
+  flex:none;padding:9px 20px 10px;color:var(--muted);font-size:12px;font-weight:600;letter-spacing:.015em;
+  border-bottom:1px solid rgba(255,255,255,.045);background:rgba(10,13,24,.16);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.conversation-label:not(:empty)::before{
+  content:"";display:inline-block;width:6px;height:6px;margin:0 8px 1px 1px;
+  border-radius:50%;background:linear-gradient(135deg,#b7a8ff,#6ee5d8);box-shadow:0 0 10px rgba(126,221,215,.25);
+}
+body.theme-light .conversation-label{background:rgba(255,255,255,.32);border-bottom-color:rgba(35,40,70,.06)}
+@media(max-width:760px){.conversation-label{padding:8px 12px;font-size:11px}}
+
 </style>
 </head>
 <body>
@@ -367,6 +381,7 @@ body.theme-light .emoji-picker{background:#fff;border-color:rgba(35,40,70,.12)}
       <button id="alertsBtn" class="alerts-btn" type="button" title="Enable message sounds and browser notifications">Enable alerts</button>
       <button id="me" class="me" hidden aria-label="Edit your profile"></button>
     </header>
+    <div id="conversationLabel" class="conversation-label" aria-live="polite">Choose a person to start a private chat</div>
     <div id="thread" class="thread" aria-live="polite"></div>
     <button id="jumpLatest" class="jump-latest" type="button" hidden>↓ Latest messages</button>
     <div id="replyPreview" class="reply-preview" hidden aria-live="polite">
@@ -493,6 +508,8 @@ body.theme-light .emoji-picker{background:#fff;border-color:rgba(35,40,70,.12)}
   }
   function paintTitle(){
     $("title").textContent=titleOf();
+    var cl=$("conversationLabel");
+    if(cl)cl.textContent=room?"Private conversation with "+titleOf():"Choose a person to start a private chat";
     $("msg").placeholder=room?"Message "+titleOf()+" privately…":"Select a member to start a private chat";
     var mb=$("muteBtn");mb.hidden=!room;mb.textContent=room&&mutedChats[room]?"Chat alerts off":"Chat alerts on";mb.setAttribute("aria-pressed",room&&mutedChats[room]?"true":"false");
   }
