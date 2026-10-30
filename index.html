@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -167,6 +168,8 @@ button:focus-visible{outline:2px solid #fff;outline-offset:2px}
   .head{padding:10px 12px}
   .thread{padding:4px 12px 12px}
   .col{max-width:84%}
+  .row.mobile-options .dots-action{opacity:.9;visibility:visible}
+  .row .bub{touch-action:pan-y}
 }
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 </style>
@@ -506,9 +509,13 @@ button:focus-visible{outline:2px solid #fff;outline-offset:2px}
       var dots=el("button","dots-action","⋯");dots.type="button";dots.title="Message options";dots.setAttribute("aria-label","Open message options");
       dots.onclick=function(ev){ev.stopPropagation();row.classList.toggle("show-reactions");if(row.classList.contains("show-reactions"))positionQuickbar()};
       col.appendChild(dots);
-      var replyBtn=el("button","menu-action","Reply");replyBtn.type="button";
-      replyBtn.onclick=function(ev){ev.stopPropagation();var ta=$("msg");ta.value="↪ "+String(nameOf(profiles[m.uid]))+": "+String(m.text||"").split("\n")[0].slice(0,160)+"\n"+ta.value;ta.focus();fit();closeMessageMenu(row)};
-      quick.appendChild(replyBtn);
+      function quoteMessage(){var ta=$("msg");ta.value="↪ "+String(nameOf(profiles[m.uid]))+": "+String(m.text||"").split("\n")[0].slice(0,160)+"\n"+ta.value;ta.focus();fit();closeMessageMenu(row)}
+      // Incoming messages are replied to with a right-swipe on mobile; no Reply item in their menu.
+      if(isMe){
+        var replyBtn=el("button","menu-action","Reply");replyBtn.type="button";
+        replyBtn.onclick=function(ev){ev.stopPropagation();quoteMessage()};
+        quick.appendChild(replyBtn);
+      }
       if(isMe){
         var editBtn=el("button","menu-action","Edit");editBtn.type="button";
         editBtn.onclick=function(ev){ev.stopPropagation();var next=window.prompt("Edit your message:",m.text||"");if(next===null){closeMessageMenu(row);return}next=next.trim();if(!next){toast("Message cannot be empty.");return}if(next.length>2000){toast("Messages must be 2,000 characters or fewer.");return}collFor(room).doc(m.id).update({text:next,editedAt:Date.now()}).then(function(){toast("Message edited.")}).catch(function(){toast("Couldn’t edit this message. Check Firestore rules.")});closeMessageMenu(row)};
@@ -522,11 +529,27 @@ button:focus-visible{outline:2px solid #fff;outline-offset:2px}
       row.addEventListener("mouseenter",function(){clearTimeout(hoverTimer);hoverTimer=setTimeout(function(){row.classList.add("menu-ready")},1000)});
       row.addEventListener("mouseleave",function(){clearTimeout(hoverTimer);row.classList.remove("menu-ready");if(!row.classList.contains("show-reactions"))closeMessageMenu(row)});
       window.addEventListener("resize",function(){if(row.classList.contains("show-reactions"))positionQuickbar()});
-      var pressTimer=null,pressTriggered=false;
-      function clearPress(){if(pressTimer){clearTimeout(pressTimer);pressTimer=null}}
-      b.addEventListener("touchstart",function(){pressTriggered=false;clearPress();pressTimer=setTimeout(function(){pressTriggered=true;row.classList.add("show-reactions");positionQuickbar()},2000)},{passive:true});
-      ["touchend","touchcancel","touchmove"].forEach(function(ev){b.addEventListener(ev,clearPress,{passive:true})});
-      b.addEventListener("contextmenu",function(ev){if(coarse){ev.preventDefault();row.classList.add("show-reactions");positionQuickbar()}});
+      var touchStartX=0,touchStartY=0,touchMoved=false,suppressNextClick=false;
+      b.addEventListener("touchstart",function(ev){
+        if(!coarse||!ev.changedTouches||!ev.changedTouches.length)return;
+        touchStartX=ev.changedTouches[0].clientX;touchStartY=ev.changedTouches[0].clientY;touchMoved=false;
+      },{passive:true});
+      b.addEventListener("touchmove",function(ev){
+        if(!coarse||!ev.changedTouches||!ev.changedTouches.length)return;
+        var dx=ev.changedTouches[0].clientX-touchStartX,dy=ev.changedTouches[0].clientY-touchStartY;
+        if(Math.abs(dx)>12||Math.abs(dy)>12)touchMoved=true;
+      },{passive:true});
+      b.addEventListener("touchend",function(ev){
+        if(!coarse||!ev.changedTouches||!ev.changedTouches.length)return;
+        var dx=ev.changedTouches[0].clientX-touchStartX,dy=ev.changedTouches[0].clientY-touchStartY;
+        if(!isMe&&dx>55&&Math.abs(dx)>Math.abs(dy)*1.25){suppressNextClick=true;quoteMessage();row.classList.remove("mobile-options","menu-ready","show-reactions");return;}
+      },{passive:true});
+      b.addEventListener("click",function(ev){
+        if(!coarse)return;
+        if(suppressNextClick){suppressNextClick=false;ev.preventDefault();ev.stopPropagation();return;}
+        row.classList.toggle("mobile-options");row.classList.add("menu-ready");
+      });
+      b.addEventListener("contextmenu",function(ev){if(coarse)ev.preventDefault()});
       if(isMe){
         var recipientRead=Array.isArray(m.readBy)&&m.readBy.indexOf(room)!==-1;
         col.appendChild(el("div","receipt",recipientRead?"Read":"Sent"));
