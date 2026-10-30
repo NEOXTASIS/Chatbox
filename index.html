@@ -145,12 +145,12 @@ button:focus-visible{outline:2px solid #fff;outline-offset:2px}
 .reply-preview-text{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;opacity:.72}
 .reply-preview-cancel{flex:none;width:28px;height:28px;border-radius:50%;background:rgba(255,255,255,.08);color:var(--text);font-size:18px;line-height:1}
 /* Quoted message sits directly above the reply bubble, like Messenger/iMessage. */
-.reply-quote{position:relative;box-sizing:border-box;max-width:100%;margin:0 5px 5px;padding:8px 11px 8px 13px;border-left:3px solid rgba(255,255,255,.5);border-radius:10px 10px 4px 10px;background:rgba(255,255,255,.10);color:var(--text);opacity:.76;font-size:12px;line-height:1.35;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.12)}
+.reply-quote{position:relative;box-sizing:border-box;width:min(100%,360px);margin:0 5px 6px;padding:8px 11px 9px 13px;border-left:3px solid rgba(255,255,255,.48);border-radius:10px 10px 4px 10px;background:rgba(255,255,255,.12);color:var(--text);opacity:.78;font-size:12px;line-height:1.4;overflow-wrap:anywhere;white-space:normal;box-shadow:0 1px 3px rgba(0,0,0,.12)}
 .reply-quote:after{content:"";position:absolute;left:-3px;bottom:-7px;width:11px;height:12px;border-left:3px solid rgba(255,255,255,.5);border-bottom:3px solid rgba(255,255,255,.5);border-radius:0 0 0 9px;opacity:.75}
 .row.mine .reply-quote{border-left-color:rgba(0,0,0,.34);background:rgba(0,0,0,.13);color:inherit;align-self:flex-end}
 .row.mine .reply-quote:after{border-left-color:rgba(0,0,0,.34);border-bottom-color:rgba(0,0,0,.34)}
 .reply-quote-name{font-weight:700;display:block;margin-bottom:3px;opacity:.9}
-.reply-quote-text{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;opacity:.88}
+.reply-quote-text{display:block;white-space:pre-wrap;overflow-wrap:anywhere;opacity:.94;max-height:4.2em;overflow:hidden}
 /* emoji picker and message reactions */
 .composer{position:relative;flex:none;display:flex;align-items:flex-end;gap:10px;padding:12px 16px 16px}
 .emoji-toggle{flex:none;width:44px;height:44px;border-radius:50%;background:var(--hover);font-size:23px;display:grid;place-items:center}
@@ -488,10 +488,13 @@ button:focus-visible{outline:2px solid #fff;outline-offset:2px}
       toast("Couldn’t open this private chat.");
     });
   }
+  var LAST_ROOM_KEY="chatbox:lastPrivateRoom:";
+  function saveLastRoom(r){try{if(uid&&r)window.localStorage.setItem(LAST_ROOM_KEY+uid,r)}catch(e){}}
+  function getLastRoom(){try{return uid?window.localStorage.getItem(LAST_ROOM_KEY+uid):null}catch(e){return null}}
   function switchRoom(r){
     if(!r||r===uid||!profiles[r])return;
     clearReactionListeners();
-    room=r;limitN=PAGE;msgs=[];hasMore=false;anchor=null;stickNext=true;
+    room=r;saveLastRoom(r);limitN=PAGE;msgs=[];hasMore=false;anchor=null;stickNext=true;
     closeSide();paintSide();paintTitle();render();subscribeMsgs();
     if(!coarse)$("msg").focus();
   }
@@ -588,7 +591,7 @@ button:focus-visible{outline:2px solid #fff;outline-offset:2px}
       desktopReply.onclick=function(ev){ev.stopPropagation();quoteMessage()};
       col.appendChild(desktopReply);
       function quoteMessage(){
-        replyTarget={id:m.id,uid:m.uid,name:String(nameOf(profiles[m.uid])||"Message"),text:String(m.text||"").split("\n")[0].slice(0,220)};
+        replyTarget={id:m.id,uid:m.uid,name:String(nameOf(profiles[m.uid])||"Message"),text:String(m.text||"").slice(0,500)};
         $("replyPreviewName").textContent="Replying to "+replyTarget.name;
         $("replyPreviewText").textContent=replyTarget.text||"Attachment";
         $("replyPreview").hidden=false;
@@ -781,6 +784,7 @@ button:focus-visible{outline:2px solid #fff;outline-offset:2px}
       s.docs.forEach(function(d){var v=d.data();if(v)profiles[d.id]=v});
       mine=profiles[uid]||null;paintMe();paintSide();paintTitle();render();
       if(!mine&&!s.metadata.fromCache&&$("modal").hidden)openProfile(true);
+      else if(!room){var lastRoom=getLastRoom();if(lastRoom&&profiles[lastRoom]&&lastRoom!==uid)switchRoom(lastRoom)}
     },denied));
     if(isOwner){
       unsubs.push(db.collection("allowed").onSnapshot(function(s){
