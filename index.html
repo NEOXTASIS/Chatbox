@@ -476,7 +476,7 @@ button:focus-visible{outline:2px solid #fff;outline-offset:2px}
           knownMessageIds[r+"/"+ch.doc.id]=true;
         }
       });
-      msgs=s.docs.map(function(d){var v=d.data();return {id:d.id,uid:v.uid,text:v.text,t:v.t,readBy:Array.isArray(v.readBy)?v.readBy:[]}}).reverse();
+      msgs=s.docs.map(function(d){var v=d.data();return {id:d.id,uid:v.uid,text:v.text,t:v.t,replyTo:v.replyTo||null,readBy:Array.isArray(v.readBy)?v.readBy:[]}}).reverse();
       hasMore=s.size>=limitN;
       firstSnapshotByRoom[r]=true;
       isInitialSnapshot=false;
