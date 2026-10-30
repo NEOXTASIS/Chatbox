@@ -691,6 +691,14 @@ button:active{transform:scale(.96)}
   background:transparent!important;
 }
 .composer-shell #msg::placeholder{font-size:14px!important}
+
+/* Prevent iOS Safari auto-zoom when the message field receives focus */
+@media (max-width: 768px){
+  .composer-shell #msg,
+  #msg{font-size:16px!important;line-height:22px!important}
+}
+/* Keep the input visually quiet while avoiding a focus-triggered zoom */
+.composer-shell:focus-within{transform:none!important}
 </style>
 </head>
 <body>
@@ -1301,15 +1309,27 @@ if(m.attachment&&m.attachment.data){
     try{
       var AC=window.AudioContext||window.webkitAudioContext;
       if(!AC)return;
-      var ctx=window.chatboxSendAudioContext||(window.chatboxSendAudioContext=new AC());
-      if(ctx.state==="suspended")ctx.resume();
-      var now=ctx.currentTime;
-      var osc=ctx.createOscillator(),gain=ctx.createGain();
-      osc.type="sine";osc.frequency.setValueAtTime(660,now);osc.frequency.exponentialRampToValueAtTime(880,now+0.065);
-      gain.gain.setValueAtTime(0.0001,now);gain.gain.exponentialRampToValueAtTime(0.075,now+0.012);gain.gain.exponentialRampToValueAtTime(0.0001,now+0.12);
-      osc.connect(gain);gain.connect(ctx.destination);osc.start(now);osc.stop(now+0.13);
+      var ctx=window.chatboxSendAudioContext;
+      if(!ctx){ctx=new AC();window.chatboxSendAudioContext=ctx;}
+      var play=function(){
+        var now=ctx.currentTime;
+        var osc=ctx.createOscillator(),gain=ctx.createGain();
+        osc.type="sine";osc.frequency.setValueAtTime(740,now);osc.frequency.exponentialRampToValueAtTime(1040,now+0.07);
+        gain.gain.setValueAtTime(0.0001,now);gain.gain.exponentialRampToValueAtTime(0.12,now+0.012);gain.gain.exponentialRampToValueAtTime(0.0001,now+0.22);
+        osc.connect(gain);gain.connect(ctx.destination);osc.start(now);osc.stop(now+0.23);
+      };
+      if(ctx.state==="suspended"){ctx.resume().then(play).catch(function(){});}else{play();}
     }catch(e){}
   }
+  function unlockSendSound(){
+    try{
+      var AC=window.AudioContext||window.webkitAudioContext;if(!AC)return;
+      var ctx=window.chatboxSendAudioContext||(window.chatboxSendAudioContext=new AC());
+      if(ctx.state==="suspended")ctx.resume();
+    }catch(e){}
+  }
+  document.addEventListener("pointerdown",unlockSendSound,{passive:true});
+  document.addEventListener("touchstart",unlockSendSound,{passive:true});
   function send(attachment){
     var ta=$("msg"),v=ta.value.trim();
     if((!v&&!attachment)||!mine||!db||!room)return Promise.resolve(false);
