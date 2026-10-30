@@ -70,6 +70,8 @@ button:focus-visible{outline:2px solid #fff;outline-offset:2px}
 .brand{display:flex;align-items:center;gap:10px;font:500 14px/1 var(--display);letter-spacing:.02em}
 .mark{display:grid;place-items:center;width:24px;height:24px;border-radius:7px;background:#fff;color:#0a0a0a;font:700 14px var(--sans)}
 .side-label{padding:10px 18px 4px;color:var(--dim);font-size:12px;text-transform:uppercase;letter-spacing:.08em}
+.side-search{display:block;width:calc(100% - 24px);margin:8px 12px 6px;padding:10px 12px;border:1px solid rgba(255,255,255,.08);border-radius:12px;background:rgba(255,255,255,.045);font-size:14px}
+.conv .conv-label{flex:1;min-width:0;overflow:hidden}.conv .conv-name{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.conv .conv-star{flex:none;color:var(--muted);font-size:16px;padding:3px 5px;border-radius:7px}.conv .conv-star.active{color:#f5d76e}.conv .conv-star:hover{background:var(--hover)}
 .list{flex:1;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:4px 8px;scrollbar-width:thin;scrollbar-color:#2a2a2a transparent}
 .conv{display:flex;align-items:center;gap:10px;width:100%;padding:8px 10px;border-radius:12px;text-align:left;transition:background .15s ease}
 .conv:hover{background:var(--hover)}
@@ -88,6 +90,8 @@ button:focus-visible{outline:2px solid #fff;outline-offset:2px}
 .me:hover{background:var(--hover);transform:translateY(-2px);box-shadow:0 8px 22px rgba(0,0,0,.5)}
 .me span{font-weight:600;max-width:120px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .alerts-btn{flex:none;padding:9px 12px;border-radius:999px;background:var(--hover);font-size:12px;font-weight:700;white-space:nowrap}
+.head-tool{flex:none;padding:9px 11px;border-radius:999px;background:var(--hover);font-size:12px;font-weight:700;white-space:nowrap}.head-tool[aria-pressed="true"]{background:rgba(255,255,255,.18)}.search-status{align-self:center;color:var(--muted);font-size:12px;padding:4px 10px}.jump-latest{position:absolute;right:22px;bottom:86px;z-index:6;border:1px solid rgba(255,255,255,.12);border-radius:999px;padding:9px 13px;background:#f4f4f2;color:#0a0a0a;font-weight:700;box-shadow:0 8px 24px rgba(0,0,0,.35)}
+body.theme-light{--bg:#f0f0f0;--win:#fff;--ink:#171717;--muted:#666;--dim:#858585;--hover:rgba(0,0,0,.07);background:var(--bg);color:var(--ink)}body.theme-light .win{background:rgba(255,255,255,.96)}body.theme-light .side{background:rgba(0,0,0,.025);border-color:rgba(0,0,0,.08)}body.theme-light .bub{background:#e8e8e8;color:#171717}body.theme-light .row.mine .bub{background:#222;color:#fff}body.theme-light .side-search{border-color:rgba(0,0,0,.1)}body.theme-light .reaction-quickbar{background:#fff;border-color:rgba(0,0,0,.15)}body.theme-light .menu-action{background:rgba(0,0,0,.07);color:#171717}body.theme-light .head-tool,body.theme-light .alerts-btn{color:#171717}
 .receipt{color:var(--dim);font-size:11px;margin:4px 8px 0}
 .av{width:34px;height:34px;flex:none;border-radius:50%;background:#262626;display:grid;place-items:center;font:500 12px var(--display);overflow:hidden}
 .av img{width:100%;height:100%;object-fit:cover;display:block}
@@ -248,6 +252,7 @@ button:focus-visible{outline:2px solid #fff;outline-offset:2px}
   <aside id="side" class="side">
     <div class="side-head"><div class="brand"><span class="mark">~</span>Chatbox</div></div>
     <div class="side-label">Chats</div>
+    <input id="chatSearch" class="side-search" type="search" placeholder="Find a person…" aria-label="Find a person" autocomplete="off">
     <div id="list" class="list"></div>
     <div class="side-foot"><button id="memBtn" class="btn" hidden>Members</button></div>
   </aside>
@@ -256,10 +261,14 @@ button:focus-visible{outline:2px solid #fff;outline-offset:2px}
     <header class="head">
       <button id="menu" class="menu" aria-label="Open chats">☰</button>
       <div id="title" class="title">Private chats</div>
+      <button id="searchBtn" class="head-tool" type="button" title="Search loaded messages" aria-label="Search messages">Search</button>
+      <button id="muteBtn" class="head-tool" type="button" title="Toggle notifications for this chat" aria-pressed="false" hidden>Chat alerts on</button>
+      <button id="themeBtn" class="head-tool" type="button" title="Toggle light and dark theme" aria-pressed="false">Light theme</button>
       <button id="alertsBtn" class="alerts-btn" type="button" title="Enable message sounds and browser notifications">Enable alerts</button>
       <button id="me" class="me" hidden aria-label="Edit your profile"></button>
     </header>
     <div id="thread" class="thread" aria-live="polite"></div>
+    <button id="jumpLatest" class="jump-latest" type="button" hidden>↓ Latest messages</button>
     <div id="replyPreview" class="reply-preview" hidden aria-live="polite">
       <div class="reply-preview-copy"><span id="replyPreviewName" class="reply-preview-name"></span><span id="replyPreviewText" class="reply-preview-text"></span></div>
       <button id="replyPreviewCancel" class="reply-preview-cancel" type="button" aria-label="Cancel reply">×</button>
@@ -309,7 +318,14 @@ button:focus-visible{outline:2px solid #fff;outline-offset:2px}
   var auth=null,db=null,uid=null,isOwner=false,profiles={},msgs=[],mine=null,stickNext=true,newAvatar="",required=false,toastT=null,replyTarget=null;
   var unsubs=[],msgUnsub=null,handledDenied=false,room=null,limitN=PAGE,hasMore=false,anchor=null,allowedList=[],pendingList=[],authMode="login",authBusy=false;
   var audioCtx=null,alertsEnabled=false,firstSnapshotByRoom={},knownMessageIds={},lastAlertAt=0;
+  var searchQuery="",chatSearchQuery="",pinnedChats={},mutedChats={},lightTheme=false;
   var ALERTS_STORAGE_KEY="chatboxAlertsEnabled";
+  var THEME_STORAGE_KEY="chatboxTheme";
+  try{lightTheme=window.localStorage.getItem(THEME_STORAGE_KEY)==="light";}catch(e){}
+  function userStoreKey(prefix){return prefix+":"+(uid||"guest")}
+  function loadUserMap(prefix){try{return JSON.parse(window.localStorage.getItem(userStoreKey(prefix))||"{}")||{}}catch(e){return {}}}
+  function saveUserMap(prefix,map){try{window.localStorage.setItem(userStoreKey(prefix),JSON.stringify(map))}catch(e){}}
+  function applyTheme(){document.body.classList.toggle("theme-light",lightTheme);var b=$("themeBtn");if(b){b.textContent=lightTheme?"Dark theme":"Light theme";b.setAttribute("aria-pressed",lightTheme?"true":"false");}}
   try{alertsEnabled=window.localStorage.getItem(ALERTS_STORAGE_KEY)==="true";}catch(e){alertsEnabled=false;}
   var reactionCache={},reactionUnsubs={},REACTION_EMOJIS=["👍","❤️","😂","😮","😢","🙏"];
   var PICKER_EMOJIS=["😀","😃","😄","😁","😆","😅","😂","🤣","😊","😇","🙂","🙃","😉","😍","🥰","😘","😋","😎","🤔","🤗","😴","😭","😢","😡","🤯","🥳","😱","🤝","👏","🙌","🙏","👍","👎","❤️","🧡","💛","💚","💙","💜","🖤","💔","🔥","✨","🎉","💯","✅","🙏","💪","🤍","💖","💋","🌹","☀️","🌙","🍀","🐱","🐶","🍕","☕","⚽","🏍️"];
@@ -363,22 +379,22 @@ button:focus-visible{outline:2px solid #fff;outline-offset:2px}
   function closeSide(){$("side").classList.remove("open");$("scrim").hidden=true}
   function conv(key,label,p,isGroup){
     var b=el("button","conv"+(room===key?" on":""));
-    var a;
-    if(isGroup){a=el("div","av","#")}else a=avatar(p);
-    b.appendChild(a);b.appendChild(el("b","",label));
-    b.onclick=function(){switchRoom(key)};
-    return b;
+    var a;if(isGroup){a=el("div","av","#")}else a=avatar(p);
+    b.appendChild(a);
+    var wrap=el("span","conv-label");wrap.appendChild(el("b","conv-name",label));b.appendChild(wrap);
+    var star=el("button","conv-star"+(pinnedChats[key]?" active":""),pinnedChats[key]?"★":"☆");star.type="button";star.title=pinnedChats[key]?"Unpin chat":"Pin chat";star.setAttribute("aria-label",star.title);star.onclick=function(ev){ev.stopPropagation();if(pinnedChats[key])delete pinnedChats[key];else pinnedChats[key]=true;saveUserMap("chatboxPinned",pinnedChats);paintSide()};b.appendChild(star);
+    b.onclick=function(){switchRoom(key)};return b;
   }
   function paintSide(){
     var l=$("list");l.textContent="";
-    var ids=Object.keys(profiles).filter(function(k){return k!==uid}).sort(function(a,b){
-      return nameOf(profiles[a]).toLowerCase()<nameOf(profiles[b]).toLowerCase()?-1:1});
-    if(!ids.length)l.appendChild(el("div","side-empty","No other approved members yet."));
+    var ids=Object.keys(profiles).filter(function(k){return k!==uid&&nameOf(profiles[k]).toLowerCase().indexOf(chatSearchQuery)>=0}).sort(function(a,b){if(!!pinnedChats[a]!==!!pinnedChats[b])return pinnedChats[a]?-1:1;return nameOf(profiles[a]).toLowerCase()<nameOf(profiles[b]).toLowerCase()?-1:1});
+    if(!ids.length)l.appendChild(el("div","side-empty",chatSearchQuery?"No members match your search.":"No other approved members yet."));
     ids.forEach(function(k){l.appendChild(conv(k,nameOf(profiles[k]),profiles[k],false))});
   }
   function paintTitle(){
     $("title").textContent=titleOf();
     $("msg").placeholder=room?"Message "+titleOf()+" privately…":"Select a member to start a private chat";
+    var mb=$("muteBtn");mb.hidden=!room;mb.textContent=room&&mutedChats[room]?"Chat alerts off":"Chat alerts on";mb.setAttribute("aria-pressed",room&&mutedChats[room]?"true":"false");
   }
   function paintMe(){
     var b=$("me");b.textContent="";
@@ -432,7 +448,7 @@ button:focus-visible{outline:2px solid #fff;outline-offset:2px}
     b.setAttribute("aria-pressed",alertsEnabled?"true":"false");
   }
   function notifyMessage(m){
-    if(!alertsEnabled||m.uid===uid)return;
+    if(!alertsEnabled||m.uid===uid||(room&&mutedChats[room]))return;
     var now=Date.now();if(now-lastAlertAt>250){ding();lastAlertAt=now;}
     if(document.hidden && "Notification" in window && Notification.permission==="granted"){
       try{new Notification("New message · "+titleOf(),{body:String(m.text||"New message").slice(0,120),tag:"chatbox-"+room});}catch(e){}
@@ -508,9 +524,11 @@ button:focus-visible{outline:2px solid #fff;outline-offset:2px}
     th.textContent="";
     if(!room){th.appendChild(el("div","empty","Select a member to start a private conversation. Only you and that member can read its messages."));return}
     if(!msgs.length){th.appendChild(el("div","empty","No messages yet. Start a private conversation with "+titleOf()+"."));return}
-    if(hasMore){var mb=el("button","more","Load older messages");mb.onclick=loadOlder;th.appendChild(mb)}
+    if(hasMore&&!searchQuery){var mb=el("button","more","Load older messages");mb.onclick=loadOlder;th.appendChild(mb)}
+    var visibleMsgs=searchQuery?msgs.filter(function(m){return String(m.text||"").toLowerCase().indexOf(searchQuery)>=0}):msgs;
+    if(searchQuery){th.appendChild(el("div","search-status",visibleMsgs.length+" matching message"+(visibleMsgs.length===1?"":"s")+" in loaded history"));if(!visibleMsgs.length){th.appendChild(el("div","empty","No loaded messages match that search. Load older messages before searching further back."));return}}
     var lastDay="",lastU=null,lastT=0;
-    msgs.forEach(function(m){
+    visibleMsgs.forEach(function(m){
       var d=dy(m.t);
       if(d!==lastDay){th.appendChild(el("div","day",d));lastDay=d;lastU=null}
       var isMe=m.uid===uid,p=profiles[m.uid],can=isMe;
@@ -656,10 +674,17 @@ button:focus-visible{outline:2px solid #fff;outline-offset:2px}
       row.appendChild(col);th.appendChild(row);
     });
     if(anchor){th.scrollTop=anchor.top+(th.scrollHeight-anchor.h);anchor=null}
-    else if(near||stickNext){th.scrollTop=th.scrollHeight;stickNext=false}
+    else if((near||stickNext)&&!searchQuery){th.scrollTop=th.scrollHeight;stickNext=false}
+    $("jumpLatest").hidden=th.scrollHeight-th.scrollTop-th.clientHeight<160||!!searchQuery
   }
   function fit(){var t=$("msg");t.style.height="auto";t.style.height=Math.min(t.scrollHeight,140)+"px"}
   $("replyPreviewCancel").addEventListener("click",function(){replyTarget=null;$("replyPreview").hidden=true;});
+  $("chatSearch").addEventListener("input",function(){chatSearchQuery=this.value.trim().toLowerCase();paintSide()});
+  $("themeBtn").addEventListener("click",function(){lightTheme=!lightTheme;try{window.localStorage.setItem(THEME_STORAGE_KEY,lightTheme?"light":"dark")}catch(e){}applyTheme()});
+  $("searchBtn").addEventListener("click",function(){if(!room){toast("Open a private chat first.");return}var q=window.prompt("Search messages loaded in this chat:",searchQuery);if(q===null)return;searchQuery=q.trim().toLowerCase();stickNext=false;render()});
+  $("muteBtn").addEventListener("click",function(){if(!room)return;if(mutedChats[room])delete mutedChats[room];else mutedChats[room]=true;saveUserMap("chatboxMuted",mutedChats);paintTitle();toast(mutedChats[room]?"Notifications muted for this chat.":"Notifications enabled for this chat.")});
+  $("jumpLatest").addEventListener("click",function(){var th=$("thread");th.scrollTop=th.scrollHeight;$("jumpLatest").hidden=true});
+  $("thread").addEventListener("scroll",function(){var th=$("thread");$("jumpLatest").hidden=th.scrollHeight-th.scrollTop-th.clientHeight<160||!!searchQuery},{passive:true});
   function send(){
     var ta=$("msg"),v=ta.value.trim();
     if(!v||!mine||!db||!room)return;
@@ -812,6 +837,7 @@ button:focus-visible{outline:2px solid #fff;outline-offset:2px}
   $("emojiToggle").onclick=function(){ $("emojiPicker").hidden=!$("emojiPicker").hidden; };
   document.addEventListener("click",function(e){if(!e.target.closest("#emojiPicker")&&!e.target.closest("#emojiToggle"))$("emojiPicker").hidden=true});
   $("alertsBtn").onclick=toggleAlerts;
+  pinnedChats=loadUserMap("chatboxPinned");mutedChats=loadUserMap("chatboxMuted");applyTheme();
   updateAlertsButton();
   $("msg").oninput=fit;
   $("msg").onkeydown=function(e){if(e.key==="Enter"&&!e.shiftKey&&!coarse){e.preventDefault();send()}};
