@@ -116,6 +116,11 @@ button:focus-visible{outline:2px solid #fff;outline-offset:2px}
 /* Small ellipsis is delayed on desktop; menu floats over the thread and never changes layout. */
 .dots-action{position:absolute;z-index:8;top:50%;width:22px;height:24px;padding:0;border:0;border-radius:7px;background:rgba(25,25,25,.92);color:var(--muted);font-size:17px;line-height:1;opacity:0;visibility:hidden;display:grid;place-items:center;transition:opacity .25s ease,background .2s ease;transform:translateY(-50%)}
 .row:not(.mine) .dots-action{right:-24px}.row.mine .dots-action{left:-24px}
+/* Desktop-only quick Reply button sits beside the ellipsis; mobile uses swipe-to-reply. */
+.reply-desktop-action{position:absolute;z-index:8;top:50%;transform:translateY(-50%);height:24px;padding:0 7px;border:0;border-radius:7px;background:rgba(25,25,25,.92);color:var(--muted);font-size:11px;opacity:0;visibility:hidden;white-space:nowrap;transition:opacity .25s ease,background .2s ease}
+.row:not(.mine) .reply-desktop-action{right:-72px}.row.mine .reply-desktop-action{left:-72px}
+.row.menu-ready .reply-desktop-action,.row:focus-within .reply-desktop-action{opacity:.82;visibility:visible}
+.reply-desktop-action:hover,.reply-desktop-action:focus-visible{opacity:1!important;background:var(--hover);outline:none}
 .row.menu-ready .dots-action,.row.show-reactions .dots-action,.row:focus-within .dots-action{opacity:.82;visibility:visible}
 .dots-action:hover,.dots-action:focus-visible{opacity:1!important;background:var(--hover);outline:none}
 .reaction-quickbar{position:fixed;z-index:2147483000;top:0;left:0;display:flex;flex-wrap:wrap;align-items:center;gap:3px;padding:5px;background:#202020;border:1px solid rgba(255,255,255,.18);border-radius:14px;box-shadow:0 8px 24px rgba(0,0,0,.72);opacity:0;visibility:hidden;pointer-events:none;transition:opacity .45s ease,visibility 0s linear .45s;max-width:calc(100vw - 16px);box-sizing:border-box}
@@ -178,6 +183,7 @@ button:focus-visible{outline:2px solid #fff;outline-offset:2px}
   .thread{padding:4px 12px 12px}
   .col{max-width:84%}
   .row.mobile-options .dots-action{opacity:.9;visibility:visible}
+  .reply-desktop-action{display:none!important}
   .row .bub{touch-action:pan-y}
 }
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
@@ -567,6 +573,9 @@ button:focus-visible{outline:2px solid #fff;outline-offset:2px}
         if(!menuPointerInside){menuCloseTimer=setTimeout(function(){if(!menuPointerInside)closeMessageMenu(row)},1500);}
       };
       col.appendChild(dots);
+      var desktopReply=el("button","reply-desktop-action","Reply");desktopReply.type="button";desktopReply.setAttribute("aria-label","Reply to this message");
+      desktopReply.onclick=function(ev){ev.stopPropagation();quoteMessage()};
+      col.appendChild(desktopReply);
       function quoteMessage(){
         replyTarget={id:m.id,uid:m.uid,name:String(nameOf(profiles[m.uid])||"Message"),text:String(m.text||"").split("\n")[0].slice(0,220)};
         $("replyPreviewName").textContent="Replying to "+replyTarget.name;
