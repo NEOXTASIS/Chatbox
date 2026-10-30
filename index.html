@@ -392,7 +392,7 @@ body.theme-light .bub{background:#EEEEEE!important;color:#000000!important}
 
 
 /* GUARANTEED MONOCHROME RENDERING: remove all colored output, including legacy accents. */
-html { filter: grayscale(1) !important; }
+/* Do not apply grayscale to the page: native emoji glyphs must retain full color. */
 body, body * { --accent:#FFFFFF !important; --accent-2:#808080 !important; accent-color:#808080 !important; }
 body .bg {
   background:#000000 !important;
