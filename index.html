@@ -644,7 +644,7 @@ body #msg { background:rgba(128,128,128,.10) !important; }
     var l=$("list");l.textContent="";
     var ids=Object.keys(profiles).filter(function(k){return k!==uid&&nameOf(profiles[k]).toLowerCase().indexOf(chatSearchQuery)>=0}).sort(function(a,b){if(!!pinnedChats[a]!==!!pinnedChats[b])return pinnedChats[a]?-1:1;return nameOf(profiles[a]).toLowerCase()<nameOf(profiles[b]).toLowerCase()?-1:1});
     if(!ids.length)l.appendChild(el("div","side-empty",chatSearchQuery?"No members match your search.":"No other approved members yet."));
-    ids.forEach(function(k){l.appendChild(conv(k,nameOf(profiles[k]),profiles[k],false))});
+    ids.forEach(function(k){l.appendChild(conv(k,nicknameOf(k)||nameOf(profiles[k]),profiles[k],false))});
   }
   function paintTitle(){
     $("title").textContent=titleOf();
