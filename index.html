@@ -7,7 +7,7 @@
 <meta name="referrer" content="no-referrer">
 <meta name="theme-color" content="#080a12">
 <meta name="color-scheme" content="dark">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://www.gstatic.com https://apis.google.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: blob:; media-src 'self' blob:; connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://*.firebaseapp.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com wss://*.firebaseio.com; frame-src https://*.firebaseapp.com https://accounts.google.com; base-uri 'self'; form-action 'self'; object-src 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://www.gstatic.com https://apis.google.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: blob:; media-src 'self' blob:; connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://*.firebaseapp.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com wss://*.firebaseio.com; frame-src https://*.firebaseapp.com https://accounts.google.com https://www.youtube-nocookie.com https://www.youtube.com; base-uri 'self'; form-action 'self'; object-src 'none'">
 <title>Chatbox</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@400;500;600&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -91,7 +91,8 @@ button:focus-visible{outline:2px solid #fff;outline-offset:2px}
 .me span{font-weight:600;max-width:120px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .alerts-btn{flex:none;padding:9px 12px;border-radius:999px;background:var(--hover);font-size:12px;font-weight:700;white-space:nowrap}
 .head-tool{flex:none;padding:9px 11px;border-radius:999px;background:var(--hover);font-size:12px;font-weight:700;white-space:nowrap}.head-tool[aria-pressed="true"]{background:rgba(255,255,255,.18)}.search-status{align-self:center;color:var(--muted);font-size:12px;padding:4px 10px}.jump-latest{position:absolute;right:22px;bottom:86px;z-index:6;border:1px solid rgba(255,255,255,.12);border-radius:999px;padding:9px 13px;background:#f4f4f2;color:#0a0a0a;font-weight:700;box-shadow:0 8px 24px rgba(0,0,0,.35)}
-body.theme-light{--bg:#f0f0f0;--win:#fff;--ink:#171717;--muted:#666;--dim:#858585;--hover:rgba(0,0,0,.07);background:var(--bg);color:var(--ink)}body.theme-light .win{background:rgba(255,255,255,.96)}body.theme-light .side{background:rgba(0,0,0,.025);border-color:rgba(0,0,0,.08)}body.theme-light .bub{background:#e8e8e8;color:#171717}body.theme-light .row.mine .bub{background:#222;color:#fff}body.theme-light .side-search{border-color:rgba(0,0,0,.1)}body.theme-light .reaction-quickbar{background:#fff;border-color:rgba(0,0,0,.15)}body.theme-light .menu-action{background:rgba(0,0,0,.07);color:#171717}body.theme-light .head-tool,body.theme-light .alerts-btn{color:#171717}
+body.theme-light{--bg:#f0f0f0;--win:#fff;--ink:#171717;--muted:#666;--dim:#858585;--hover:rgba(0,0,0,.07);background:var(--bg);color:var(--ink)}body.theme-light .win{background:rgba(255,255,255,.96)}body.theme-light .side{background:rgba(0,0,0,.025);border-color:rgba(0,0,0,.08)}body.theme-light .message-link{color:#9bc7ff;text-decoration:underline;text-underline-offset:2px;overflow-wrap:anywhere;cursor:pointer}.message-link:active{opacity:.75}
+.bub{background:#e8e8e8;color:#171717}body.theme-light .row.mine .bub{background:#222;color:#fff}body.theme-light .side-search{border-color:rgba(0,0,0,.1)}body.theme-light .reaction-quickbar{background:#fff;border-color:rgba(0,0,0,.15)}body.theme-light .menu-action{background:rgba(0,0,0,.07);color:#171717}body.theme-light .head-tool,body.theme-light .alerts-btn{color:#171717}
 .receipt{color:var(--dim);font-size:11px;margin:4px 8px 0}
 .av{width:34px;height:34px;flex:none;border-radius:50%;background:#262626;display:grid;place-items:center;font:500 12px var(--display);overflow:hidden}
 .av img{width:100%;height:100%;object-fit:cover;display:block}
@@ -846,7 +847,24 @@ body #msg { background:rgba(128,128,128,.10) !important; }
         quote.appendChild(el("span","reply-quote-text",String(m.replyTo.text).slice(0,220)));
         col.appendChild(quote);
       }
-var b=el("div","bub",m.text);
+var b=el("div","bub");
+      // Render URLs as real, safe clickable links while keeping ordinary text intact.
+      var messageText=String(m.text||"");
+      var urlPattern=/https?:\/\/[^\s<>"']+/gi;
+      var lastIndex=0,linkMatch;
+      while((linkMatch=urlPattern.exec(messageText))!==null){
+        if(linkMatch.index>lastIndex)b.appendChild(document.createTextNode(messageText.slice(lastIndex,linkMatch.index)));
+        var rawUrl=linkMatch[0],cleanUrl=rawUrl;
+        var trailing="";
+        while(/[),.!?;:]$/.test(cleanUrl)){trailing=cleanUrl.slice(-1)+trailing;cleanUrl=cleanUrl.slice(0,-1)}
+        if(cleanUrl){
+          var link=document.createElement("a");link.href=cleanUrl;link.textContent=cleanUrl;link.target="_blank";link.rel="noopener noreferrer";link.className="message-link";
+          b.appendChild(link);
+        }
+        if(trailing)b.appendChild(document.createTextNode(trailing));
+        lastIndex=urlPattern.lastIndex;
+      }
+      if(lastIndex<messageText.length)b.appendChild(document.createTextNode(messageText.slice(lastIndex)));
       var yt=extractYouTubeId(m.text||"");
       if(yt){var frame=document.createElement("iframe");frame.className="youtube-player";frame.src="https://www.youtube-nocookie.com/embed/"+yt;frame.title="YouTube video player";frame.loading="lazy";frame.referrerPolicy="strict-origin-when-cross-origin";frame.allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share";frame.allowFullscreen=true;frame.setAttribute("sandbox","allow-scripts allow-same-origin allow-presentation allow-popups");b.appendChild(frame)}
       var quick=el("div","reaction-quickbar");
