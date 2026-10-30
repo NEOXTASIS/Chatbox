@@ -157,7 +157,14 @@ body.theme-light{--bg:#f0f0f0;--win:#fff;--ink:#171717;--muted:#666;--dim:#85858
 .reply-quote-text{display:block;white-space:pre-wrap;overflow-wrap:anywhere;opacity:.94;max-height:4.2em;overflow:hidden}
 /* emoji picker and message reactions */
 .attachment-link{display:inline-block;margin-top:6px;padding:7px 10px;border-radius:8px;background:rgba(255,255,255,.1);color:inherit;text-decoration:none;overflow-wrap:anywhere}.voice-player{display:block;width:min(100%,320px);margin-top:8px}.youtube-player{display:block;width:min(100%,400px);aspect-ratio:16/9;border:0;border-radius:12px;margin-top:8px;background:#111}.voice-card{width:min(94vw,420px)}.voice-card p{color:var(--muted);font-size:14px;line-height:1.45}.voice-status{min-height:24px;color:var(--muted);font-size:13px}
-.emoji-toggle{flex:none;width:44px;height:44px;border-radius:50%;background:var(--hover);font-size:23px;display:grid;place-items:center}
+.composer-tools{position:relative;flex:none;display:flex;align-items:center}
+  .composer-plus{font-size:29px;font-weight:300;transition:transform .18s ease}
+  .composer-plus[aria-expanded="true"]{transform:rotate(45deg)}
+  .composer-options{position:absolute;left:0;bottom:calc(100% + 12px);z-index:25;display:flex;flex-direction:column;gap:8px;padding:9px;border:1px solid rgba(255,255,255,.12);border-radius:999px;background:rgba(22,22,22,.97);box-shadow:0 12px 32px rgba(0,0,0,.5);animation:composerOptionsIn .16s ease-out}
+  .composer-options[hidden]{display:none!important}
+  .composer-options .emoji-toggle{width:44px;height:44px}
+  @keyframes composerOptionsIn{from{opacity:0;transform:translateY(6px) scale(.96)}to{opacity:1;transform:translateY(0) scale(1)}}
+  .emoji-toggle{flex:none;width:44px;height:44px;border-radius:50%;background:var(--hover);font-size:23px;display:grid;place-items:center}
 .emoji-toggle:hover{background:rgba(255,255,255,.14)}
 .emoji-picker{position:absolute;left:16px;bottom:70px;z-index:8;width:min(320px,calc(100vw - 32px));padding:10px;background:#171717;border:1px solid rgba(255,255,255,.12);border-radius:16px;box-shadow:0 16px 40px rgba(0,0,0,.55);display:grid;grid-template-columns:repeat(8,minmax(0,1fr));gap:4px}
 .emoji-picker[hidden]{display:none!important}
@@ -536,10 +543,15 @@ body #msg { background:rgba(128,128,128,.10) !important; }
     </div>
     <div class="composer">
       <div id="emojiPicker" class="emoji-picker" hidden aria-label="Choose an emoji"></div>
-      <button id="emojiToggle" class="emoji-toggle" type="button" aria-label="Add emoji" title="Add emoji">☺</button>
-      <button id="attachBtn" class="emoji-toggle" type="button" aria-label="Attach a file" title="Send a picture or file">📎</button>
-<button id="cameraBtn" class="emoji-toggle" type="button" aria-label="Take a picture" title="Take a picture">📸</button>
-      <button id="voiceBtn" class="emoji-toggle" type="button" aria-label="Record a voice message" title="Record a voice message">🎙️</button>
+      <div class="composer-tools">
+        <button id="composerPlus" class="emoji-toggle composer-plus" type="button" aria-label="More message options" aria-expanded="false" title="More options">＋</button>
+        <div id="composerOptions" class="composer-options" hidden aria-label="Message options">
+          <button id="emojiToggle" class="emoji-toggle" type="button" aria-label="Add emoji" title="Add emoji">☺</button>
+          <button id="attachBtn" class="emoji-toggle" type="button" aria-label="Attach a file" title="Send a picture or file">📎</button>
+          <button id="cameraBtn" class="emoji-toggle" type="button" aria-label="Take a picture" title="Take a picture">📸</button>
+          <button id="voiceBtn" class="emoji-toggle" type="button" aria-label="Record a voice message" title="Record a voice message">🎙️</button>
+        </div>
+      </div>
       <input id="attachInput" type="file" accept="image/*,.pdf,.txt,.doc,.docx,.xls,.xlsx,.zip" hidden>
       <textarea id="msg" rows="1" maxlength="2000" placeholder="Message" aria-label="Write a message"></textarea>
       <button id="send" class="send" aria-label="Send message">↑</button>
@@ -1202,8 +1214,25 @@ if(m.attachment&&m.attachment.data){
     });
   }
   buildEmojiPicker();
-  $("emojiToggle").onclick=function(){ $("emojiPicker").hidden=!$("emojiPicker").hidden; };
-  document.addEventListener("click",function(e){if(!e.target.closest("#emojiPicker")&&!e.target.closest("#emojiToggle"))$("emojiPicker").hidden=true});
+  $("composerPlus").addEventListener("click",function(){
+    var open=$("composerOptions").hidden;
+    $("composerOptions").hidden=!open;
+    $("composerPlus").setAttribute("aria-expanded",open?"true":"false");
+    if(!open)$("emojiPicker").hidden=true;
+  });
+  $("emojiToggle").onclick=function(){
+    $("emojiPicker").hidden=!$("emojiPicker").hidden;
+    $("composerOptions").hidden=true;
+    $("composerPlus").setAttribute("aria-expanded","false");
+  };
+  document.addEventListener("click",function(e){
+    if(!e.target.closest(".composer-tools")){
+      $("composerOptions").hidden=true;
+      $("composerPlus").setAttribute("aria-expanded","false");
+    }
+    if(!e.target.closest("#emojiPicker")&&!e.target.closest("#emojiToggle"))$("emojiPicker").hidden=true;
+  });
+
   $("alertsBtn").onclick=toggleAlerts;
   pinnedChats=loadUserMap("chatboxPinned");mutedChats=loadUserMap("chatboxMuted");applyTheme();
   updateAlertsButton();
