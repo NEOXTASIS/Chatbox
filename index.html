@@ -174,7 +174,7 @@ body.theme-light{--bg:#f0f0f0;--win:#fff;--ink:#171717;--muted:#666;--dim:#85858
 .card{width:100%;max-width:360px;max-height:100%;overflow-y:auto;background:#111;border-radius:18px;padding:24px;box-shadow:0 30px 80px rgba(0,0,0,.7),0 0 0 1px rgba(255,255,255,.08);display:grid;gap:14px;justify-items:center}
 .card h2{font:500 1rem/1.3 var(--display);margin:0}
 .card .note{color:var(--muted);font-size:13px;text-align:center;margin:0}
-.pick{position:relative;width:96px;height:96px;border-radius:50%;background:#262626;overflow:hidden;display:grid;place-items:center;font:500 28px var(--display);transition:transform .18s ease}
+.pick{position:relative;width:96px;height:96px;border-radius:50%;background:#262626;overflow:hidden;display:grid;place-items:center;font:500 28px var(--display);transition:transform .18s ease;cursor:default}.pick small{display:none!important}.photo-controls{display:flex;justify-content:center;gap:10px;margin:12px 0 22px;flex-wrap:wrap}.photo-controls .btn{padding:10px 16px;font-size:14px}.crop-panel{width:100%;margin:8px 0 16px;padding:14px;border:1px solid rgba(255,255,255,.12);border-radius:14px;background:rgba(0,0,0,.12)}.crop-panel[hidden]{display:none!important}.crop-viewport{width:min(72vw,260px);height:min(72vw,260px);max-height:260px;margin:0 auto 14px;overflow:hidden;border-radius:50%;position:relative;touch-action:none;background:#111;cursor:grab}.crop-viewport img{position:absolute;max-width:none;max-height:none;user-select:none;-webkit-user-drag:none;pointer-events:none}.crop-zoom{display:flex;align-items:center;gap:12px;margin:12px 0}.crop-zoom input{flex:1}
 .pick:hover{transform:translateY(-2px)}
 .pick img{width:100%;height:100%;object-fit:cover}
 .pick small{position:absolute;inset:auto 0 0;background:rgba(0,0,0,.6);font:600 11px var(--sans);padding:3px 0;text-align:center}
@@ -551,8 +551,10 @@ body #msg { background:rgba(128,128,128,.10) !important; }
 <div id="modal" class="modal" hidden>
   <div class="card" role="dialog" aria-label="Your profile">
     <h2 id="mtitle">Set up your profile</h2>
-    <button id="pick" class="pick" aria-label="Choose a profile picture"></button>
+    <button id="pick" class="pick" aria-label="Preview profile picture"></button>
+    <div class="photo-controls"><button id="changePhoto" class="btn" type="button">Change photo</button><button id="cropPhoto" class="btn" type="button" disabled>Crop image</button></div>
     <input id="pfile" type="file" accept="image/*" hidden>
+    <div id="cropPanel" class="crop-panel" hidden><p class="note">Adjust the crop by dragging the image, then save your square crop.</p><div class="crop-viewport" id="cropViewport"><img id="cropImage" alt="Adjustable crop preview"></div><div class="crop-zoom"><label for="cropZoom">Zoom</label><input id="cropZoom" type="range" min="1" max="3" step="0.05" value="1"></div><div class="btns"><button id="cancelCrop" class="btn" type="button">Cancel crop</button><button id="applyCrop" class="btn primary" type="button">Use crop</button></div></div>
     <input id="pname" class="field" maxlength="20" placeholder="Choose a username" aria-label="Username" autocomplete="off">
     <div id="perr" class="err"></div>
     <div class="btns"><button id="pcancel" class="btn">Cancel</button><button id="psave" class="btn primary">Save</button></div>
@@ -1012,9 +1014,8 @@ body #msg { background:rgba(128,128,128,.10) !important; }
   function paintPick(){
     var b=$("pick");b.textContent="";
     var n=$("pname").value.trim();
-    if(newAvatar){var i=document.createElement("img");i.src=newAvatar;i.alt="";b.appendChild(i)}
+    if(newAvatar){var i=document.createElement("img");i.src=newAvatar;i.alt="Profile picture preview";b.appendChild(i)}
     else b.appendChild(document.createTextNode((n.charAt(0)||"+").toUpperCase()));
-    b.appendChild(el("small","","Change photo"));
   }
   function openProfile(req){
     required=req;
@@ -1154,10 +1155,53 @@ body #msg { background:rgba(128,128,128,.10) !important; }
   $("menu").onclick=openSide;
   $("scrim").onclick=closeSide;
   $("me").onclick=function(){openProfile(false)};
-  $("pick").onclick=function(){$("pfile").click()};
+  var cropState=null;
+  function showCrop(data){
+    return new Promise(function(resolve,reject){
+      var im=new Image();im.onload=function(){
+        var vp=$("cropViewport"),size=Math.min(260,Math.round(window.innerWidth*.72));
+        vp.style.width=size+"px";vp.style.height=size+"px";
+        var base=Math.max(size/im.width,size/im.height);
+        cropState={img:im,size:size,base:base,zoom:1,x:(size-im.width*base)/2,y:(size-im.height*base)/2,startX:0,startY:0,dragX:0,dragY:0,resolve:resolve,reject:reject};
+        $("cropImage").src=data;$("cropZoom").value="1";positionCrop();$("cropPanel").hidden=false;$("cropPhoto").disabled=false;
+      };im.onerror=reject;im.src=data;
+    });
+  }
+  function positionCrop(){
+    if(!cropState)return;var c=cropState,w=c.img.width*c.base*c.zoom,h=c.img.height*c.base*c.zoom;
+    c.x=Math.min(0,Math.max(c.size-w,c.x));c.y=Math.min(0,Math.max(c.size-h,c.y));
+    var im=$("cropImage");im.style.width=w+"px";im.style.height=h+"px";im.style.left=c.x+"px";im.style.top=c.y+"px";
+  }
+  function closeCrop(apply){
+    if(!cropState)return;var c=cropState;
+    if(apply){
+      var scale=c.img.width*c.base*c.zoom,sourceSize=c.size/scale;
+      var sx=-c.x/scale*c.img.width,sy=-c.y/scale*c.img.height;
+      var sw=c.size/scale*c.img.width,sh=c.size/scale*c.img.height;
+      var canvas=document.createElement("canvas");canvas.width=320;canvas.height=320;
+      canvas.getContext("2d").drawImage(c.img,sx,sy,sw,sh,0,0,320,320);
+      newAvatar=canvas.toDataURL("image/jpeg",.82);paintPick();
+    }
+    $("cropPanel").hidden=true;$("cropPhoto").disabled=true;cropState=null;
+  }
+  $("changePhoto").onclick=function(){$("pfile").click()};
+  $("cropPhoto").onclick=function(){if(cropState)$("cropPanel").hidden=false};
+  $("cancelCrop").onclick=function(){closeCrop(false)};
+  $("applyCrop").onclick=function(){closeCrop(true)};
+  $("cropZoom").oninput=function(){
+    if(!cropState)return;var c=cropState,old=c.zoom,centerX=(c.size/2-c.x)/(c.base*old),centerY=(c.size/2-c.y)/(c.base*old);
+    c.zoom=Number(this.value);c.x=c.size/2-centerX*c.base*c.zoom;c.y=c.size/2-centerY*c.base*c.zoom;positionCrop();
+  };
+  (function(){
+    var vp=$("cropViewport"),drag=null;
+    vp.addEventListener("pointerdown",function(e){if(!cropState)return;drag={x:e.clientX,y:e.clientY,left:cropState.x,top:cropState.y};vp.setPointerCapture(e.pointerId)});
+    vp.addEventListener("pointermove",function(e){if(!drag||!cropState)return;cropState.x=drag.left+e.clientX-drag.x;cropState.y=drag.top+e.clientY-drag.y;positionCrop()});
+    function end(){drag=null}vp.addEventListener("pointerup",end);vp.addEventListener("pointercancel",end);
+  })();
+  $("pick").onclick=function(){};
   $("pfile").onchange=function(e){
     var f=e.target.files[0];if(!f)return;
-    toAvatar(f).then(function(d){newAvatar=d;$("perr").textContent="";paintPick()}).catch(function(){$("perr").textContent="Please choose an image file."});
+    toAvatar(f).then(function(d){newAvatar=d;$("perr").textContent="";paintPick();return showCrop(d)}).catch(function(){$("perr").textContent="Please choose a valid image file."});
     e.target.value="";
   };
   $("pname").oninput=function(){if(!newAvatar)paintPick()};
