@@ -82,7 +82,7 @@ button:focus-visible{outline:2px solid #fff;outline-offset:2px}
 .side-foot .btn{width:100%}
 .scrim{position:absolute;inset:0;background:rgba(0,0,0,.55);z-index:4}
 .main{flex:1;min-width:0;display:flex;flex-direction:column;min-height:0}
-.head{display:flex;align-items:center;gap:6px;padding:12px 16px;flex:none}
+.head{display:flex;align-items:center;gap:6px;padding:12px 16px;flex:none}.head-actions{position:relative;flex:none}.actions-toggle{width:44px;height:44px;font-size:27px;line-height:1;padding:0;display:grid;place-items:center}.actions-menu{position:absolute;right:0;top:calc(100% + 8px);z-index:30;min-width:190px;display:flex;flex-direction:column;gap:6px;padding:9px;border:1px solid rgba(255,255,255,.13);border-radius:16px;background:var(--win);box-shadow:0 12px 36px rgba(0,0,0,.48)}.actions-menu[hidden]{display:none!important}.actions-menu .head-tool{width:100%;text-align:left;padding:11px 13px;border-radius:10px;font-size:13px}.actions-menu .head-tool[hidden]{display:none!important}
 .menu{display:none;width:40px;height:40px;border-radius:50%;place-items:center;font-size:18px}
 .menu:hover{background:var(--hover)}
 .title{flex:1;min-width:0;font:500 14px/1.2 var(--display);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:0 6px}
@@ -515,11 +515,16 @@ body #msg { background:rgba(128,128,128,.10) !important; }
     <header class="head">
       <button id="menu" class="menu" aria-label="Open chats">☰</button>
       <div id="title" class="title">Private chats</div>
-      <button id="searchBtn" class="head-tool" type="button" title="Search loaded messages" aria-label="Search messages">Search</button>
-      <button id="muteBtn" class="head-tool" type="button" title="Toggle notifications for this chat" aria-pressed="false" hidden>Chat alerts on</button>
-      <button id="nicknameBtn" class="head-tool" type="button" title="Set a nickname for this contact" hidden>Nickname</button>
-      <button id="themeBtn" class="head-tool" type="button" title="Toggle light and dark theme" aria-pressed="false">Light theme</button>
-      <button id="alertsBtn" class="alerts-btn" type="button" title="Enable message sounds and browser notifications">Enable alerts</button>
+      <div class="head-actions">
+        <button id="actionsBtn" class="head-tool actions-toggle" type="button" aria-label="More options" aria-expanded="false" title="More options">⋯</button>
+        <div id="actionsMenu" class="actions-menu" hidden>
+          <button id="searchBtn" class="head-tool" type="button" title="Search loaded messages" aria-label="Search messages">Search messages</button>
+          <button id="muteBtn" class="head-tool" type="button" title="Toggle notifications for this chat" aria-pressed="false" hidden>Chat alerts on</button>
+          <button id="nicknameBtn" class="head-tool" type="button" title="Set a nickname for this contact" hidden>Nickname</button>
+          <button id="themeBtn" class="head-tool" type="button" title="Toggle light and dark theme" aria-pressed="false">Light theme</button>
+          <button id="alertsBtn" class="head-tool" type="button" title="Enable message sounds and browser notifications">Enable alerts</button>
+        </div>
+      </div>
       <button id="me" class="me" hidden aria-label="Edit your profile"></button>
     </header>
     <div id="conversationLabel" class="conversation-label" aria-live="polite">Choose a person to start a private chat</div>
@@ -947,6 +952,11 @@ body #msg { background:rgba(128,128,128,.10) !important; }
   function fit(){var t=$("msg");t.style.height="auto";t.style.height=Math.min(t.scrollHeight,140)+"px"}
   $("replyPreviewCancel").addEventListener("click",function(){replyTarget=null;$("replyPreview").hidden=true;});
   $("chatSearch").addEventListener("input",function(){chatSearchQuery=this.value.trim().toLowerCase();paintSide()});
+  function closeActionsMenu(){var m=$("actionsMenu"),b=$("actionsBtn");if(m)m.hidden=true;if(b)b.setAttribute("aria-expanded","false")}
+  $("actionsBtn").addEventListener("click",function(e){e.stopPropagation();var m=$("actionsMenu"),opening=m.hidden;m.hidden=!opening;this.setAttribute("aria-expanded",opening?"true":"false")});
+  $("actionsMenu").addEventListener("click",function(e){e.stopPropagation();var b=e.target.closest("button");if(b&&!b.hidden)closeActionsMenu()});
+  document.addEventListener("click",function(e){if(!$("actionsMenu").hidden&&!$("actionsMenu").contains(e.target)&&e.target!==$("actionsBtn"))closeActionsMenu()});
+  document.addEventListener("keydown",function(e){if(e.key==="Escape")closeActionsMenu()});
   $("themeBtn").addEventListener("click",function(){lightTheme=!lightTheme;try{window.localStorage.setItem(THEME_STORAGE_KEY,lightTheme?"light":"dark")}catch(e){}applyTheme()});
   $("searchBtn").addEventListener("click",function(){if(!room){toast("Open a private chat first.");return}var q=window.prompt("Search messages loaded in this chat:",searchQuery);if(q===null)return;searchQuery=q.trim().toLowerCase();stickNext=false;render()});
   $("muteBtn").addEventListener("click",function(){if(!room)return;if(mutedChats[room])delete mutedChats[room];else mutedChats[room]=true;saveUserMap("chatboxMuted",mutedChats);paintTitle();toast(mutedChats[room]?"Notifications muted for this chat.":"Notifications enabled for this chat.")});
