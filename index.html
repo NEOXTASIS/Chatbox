@@ -509,6 +509,16 @@ button:focus-visible{outline:2px solid #fff;outline-offset:2px}
         target.classList.remove("show-reactions");
         if(menuCloseTimer!==null){clearTimeout(menuCloseTimer);menuCloseTimer=null;}
       }
+      // Keep the menu open while the pointer is over the emoji/options bar.
+      quick.addEventListener("mouseenter",function(){
+        if(menuCloseTimer!==null){clearTimeout(menuCloseTimer);menuCloseTimer=null;}
+      });
+      quick.addEventListener("mouseleave",function(){
+        if(row.classList.contains("show-reactions")){
+          if(menuCloseTimer!==null)clearTimeout(menuCloseTimer);
+          menuCloseTimer=setTimeout(function(){closeMessageMenu(row)},1500);
+        }
+      });
       var dots=el("button","dots-action","⋯");dots.type="button";dots.title="Message options";dots.setAttribute("aria-label","Open message options");
       dots.onclick=function(ev){
         ev.stopPropagation();
