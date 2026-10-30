@@ -539,6 +539,7 @@ body #msg { background:rgba(128,128,128,.10) !important; }
         <button id="actionsBtn" class="head-tool actions-toggle" type="button" aria-label="More options" aria-expanded="false" title="More options">⋯</button>
         <div id="actionsMenu" class="actions-menu" hidden>
           <button id="searchBtn" class="head-tool" type="button" title="Search loaded messages" aria-label="Search messages">Search messages</button>
+          <button id="attachmentsBtn" class="head-tool" type="button" title="Browse images and voice messages" aria-label="Attachments">Attachments</button>
           <button id="muteBtn" class="head-tool" type="button" title="Toggle notifications for this chat" aria-pressed="false" hidden>Chat alerts on</button>
           <button id="nicknameBtn" class="head-tool" type="button" title="Set a nickname for this contact" hidden>Nickname</button>
           <button id="themeBtn" class="head-tool" type="button" title="Toggle light and dark theme" aria-pressed="false">Light theme</button>
@@ -994,6 +995,50 @@ if(m.attachment&&m.attachment.data){
   document.addEventListener("keydown",function(e){if(e.key==="Escape")closeActionsMenu()});
   $("themeBtn").addEventListener("click",function(){lightTheme=!lightTheme;try{window.localStorage.setItem(THEME_STORAGE_KEY,lightTheme?"light":"dark")}catch(e){}applyTheme()});
   $("searchBtn").addEventListener("click",function(){if(!room){toast("Open a private chat first.");return}var q=window.prompt("Search messages loaded in this chat:",searchQuery);if(q===null)return;searchQuery=q.trim().toLowerCase();stickNext=false;render()});
+  var attachmentMode="images";
+  function closeAttachments(){$("attachmentsModal").hidden=true}
+  function dateLabel(ts){var d=new Date(ts||0),now=new Date(),today=new Date(now.getFullYear(),now.getMonth(),now.getDate()),day=new Date(d.getFullYear(),d.getMonth(),d.getDate()),diff=Math.round((today-day)/86400000);if(diff===0)return "Today";if(diff===1)return "Yesterday";return d.toLocaleDateString(undefined,{year:"numeric",month:"long",day:"numeric"})}
+  function renderAttachments(items){
+    var root=$("attachmentsList");root.textContent="";var groups={};
+    items.forEach(function(m){
+      var a=m.attachment;if(!a||!a.data)return;var type=a.type||"";
+      var wanted=attachmentMode==="images"?(type.indexOf("image/")===0):(type.indexOf("audio/")===0);
+      if(!wanted)return;var key=dateLabel(m.t);if(!groups[key])groups[key]=[];groups[key].push(m);
+    });
+    var keys=Object.keys(groups);
+    if(!keys.length){var empty=document.createElement("div");empty.className="attachment-empty";empty.textContent=attachmentMode==="images"?"No images found in this conversation.":"No voice messages found in this conversation.";root.appendChild(empty);return}
+    keys.forEach(function(key){
+      var section=document.createElement("section");var heading=document.createElement("div");heading.className="attachment-date";heading.textContent=key;section.appendChild(heading);
+      if(attachmentMode==="images"){
+        var grid=document.createElement("div");grid.className="attachment-grid";
+        groups[key].forEach(function(m){var link=document.createElement("a");link.href=m.attachment.data;link.target="_blank";link.rel="noopener";var img=document.createElement("img");img.className="attachment-thumb";img.src=m.attachment.data;img.alt=m.attachment.name||"Sent image";link.appendChild(img);grid.appendChild(link)});
+        section.appendChild(grid);
+      }else{
+        groups[key].forEach(function(m){var item=document.createElement("div");item.className="attachment-voice-item";item.appendChild(makeVoicePlayer(m.attachment.data));var time=document.createElement("span");time.className="voice-time";time.textContent=new Date(m.t).toLocaleTimeString([],{hour:"numeric",minute:"2-digit"});item.appendChild(time);section.appendChild(item)});
+      }
+      root.appendChild(section);
+    });
+  }
+  function loadAttachmentsForCurrentRoom(){
+    if(!room)return;
+    $("attachmentsStatus").textContent="Loading…";
+    collFor(room).orderBy("t","desc").get().then(function(snap){
+      if($("attachmentsModal").hidden)return;
+      var items=snap.docs.map(function(d){var v=d.data();return{id:d.id,t:v.t,attachment:v.attachment||null}});
+      renderAttachments(items);$("attachmentsStatus").textContent="Grouped by date.";
+    }).catch(function(err){$("attachmentsStatus").textContent="Could not load attachments"+(err&&err.code?" ("+err.code+")":"")+". Check your connection or Firestore read permissions."});
+  }
+  function openAttachments(){
+    if(!room){toast("Open a private chat first.");return}
+    attachmentMode="images";$("attachmentsImagesTab").classList.add("active");$("attachmentsVoiceTab").classList.remove("active");
+    $("attachmentsStatus").textContent="Loading attachments…";$("attachmentsList").textContent="";$("attachmentsModal").hidden=false;loadAttachmentsForCurrentRoom();
+  }
+  $("attachmentsBtn").addEventListener("click",openAttachments);
+  $("attachmentsClose").addEventListener("click",closeAttachments);
+  $("attachmentsModal").addEventListener("click",function(e){if(e.target===$("attachmentsModal"))closeAttachments()});
+  $("attachmentsImagesTab").addEventListener("click",function(){attachmentMode="images";this.classList.add("active");$("attachmentsVoiceTab").classList.remove("active");loadAttachmentsForCurrentRoom()});
+  $("attachmentsVoiceTab").addEventListener("click",function(){attachmentMode="voice";this.classList.add("active");$("attachmentsImagesTab").classList.remove("active");loadAttachmentsForCurrentRoom()});
+
   $("muteBtn").addEventListener("click",function(){if(!room)return;if(mutedChats[room])delete mutedChats[room];else mutedChats[room]=true;saveUserMap("chatboxMuted",mutedChats);paintTitle();toast(mutedChats[room]?"Notifications muted for this chat.":"Notifications enabled for this chat.")});
   $("jumpLatest").addEventListener("click",function(){var th=$("thread");th.scrollTop=th.scrollHeight;$("jumpLatest").hidden=true});
   $("thread").addEventListener("scroll",function(){var th=$("thread");$("jumpLatest").hidden=th.scrollHeight-th.scrollTop-th.clientHeight<160||!!searchQuery},{passive:true});
