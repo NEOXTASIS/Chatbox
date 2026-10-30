@@ -116,16 +116,18 @@ button:focus-visible{outline:2px solid #fff;outline-offset:2px}
 .dots-action{position:absolute;z-index:6;right:-25px;top:50%;transform:translateY(-50%);width:22px;height:26px;padding:0;border:0;border-radius:7px;background:transparent;color:var(--muted);font-size:17px;line-height:1;opacity:0;visibility:hidden;display:grid;place-items:center;transition:opacity .12s ease,background .12s ease}
 .row:hover .dots-action,.row.show-reactions .dots-action,.row:focus-within .dots-action{opacity:.72;visibility:visible}
 .dots-action:hover,.dots-action:focus-visible{opacity:1!important;background:var(--hover);outline:none}
-.reaction-quickbar{position:absolute;z-index:20;top:18px;right:8px;display:flex;gap:3px;padding:5px;background:#202020;border:1px solid rgba(255,255,255,.14);border-radius:999px;box-shadow:0 8px 24px rgba(0,0,0,.45);opacity:0;visibility:hidden;pointer-events:none;transition:opacity .28s ease,visibility 0s linear .28s}
-.row.mine .reaction-quickbar{right:8px}
-.row:hover .reaction-quickbar,.row.show-reactions .reaction-quickbar,.row:focus-within .reaction-quickbar{opacity:1;visibility:visible;pointer-events:auto;transition:opacity .28s ease,visibility 0s}
+.reaction-quickbar{position:absolute;z-index:60;top:-18px;left:50%;right:auto;transform:translateX(-50%);display:flex;gap:3px;padding:5px;background:#202020;border:1px solid rgba(255,255,255,.14);border-radius:999px;box-shadow:0 8px 24px rgba(0,0,0,.45);opacity:0;visibility:hidden;pointer-events:none;transition:opacity .38s ease,visibility 0s linear .38s}
+/* Center the floating emoji bar over the message and lift its row above nearby bubbles. */
+.row.show-reactions{position:relative;z-index:50}
+.row.show-reactions .col{z-index:51}
+.row:hover .reaction-quickbar,.row.show-reactions .reaction-quickbar,.row:focus-within .reaction-quickbar{opacity:1;visibility:visible;pointer-events:auto;transition:opacity .38s ease,visibility 0s}
 .reaction-quickbar .react{font-size:18px;min-height:32px;min-width:32px;justify-content:center;padding:4px;border:0;background:transparent}
 .reaction-quickbar .react:hover{background:rgba(255,255,255,.16)}
 /* Keep reaction controls floating over the bubble without changing chat layout. */
 .row .col{position:relative}
-.row .reaction-quickbar{transform:none!important}
+.row .reaction-quickbar{transform:translateX(-50%)!important}
 .row .bub:hover{transform:none;box-shadow:none}
-@media (hover:none),(pointer:coarse){.dots-action{opacity:.55;visibility:visible}.reaction-quickbar{opacity:0;visibility:hidden;pointer-events:none}.row.show-reactions .reaction-quickbar{opacity:1;visibility:visible;pointer-events:auto;transition:opacity .28s ease,visibility 0s}}
+@media (hover:none),(pointer:coarse){.dots-action{opacity:.55;visibility:visible}.reaction-quickbar{opacity:0;visibility:hidden;pointer-events:none}.row.show-reactions{position:relative;z-index:50}.row.show-reactions .col{z-index:51}.row.show-reactions .reaction-quickbar{opacity:1;visibility:visible;pointer-events:auto;transition:opacity .38s ease,visibility 0s}}
 .bub:hover{transform:translateY(-2px);box-shadow:0 8px 22px rgba(0,0,0,.55)}
 .dl{display:none;margin:4px 6px 0;padding:6px 4px;color:var(--danger);font-size:12px}
 .row.can:hover .dl,.row.can.sel .dl{display:block}
