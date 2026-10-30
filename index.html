@@ -519,7 +519,7 @@ button:focus-visible{outline:2px solid #fff;outline-offset:2px}
       }
       col.appendChild(quick);col.appendChild(b);
       var hoverTimer=null;
-      row.addEventListener("mouseenter",function(){clearTimeout(hoverTimer);hoverTimer=setTimeout(function(){row.classList.add("menu-ready")},3000)});
+      row.addEventListener("mouseenter",function(){clearTimeout(hoverTimer);hoverTimer=setTimeout(function(){row.classList.add("menu-ready")},1000)});
       row.addEventListener("mouseleave",function(){clearTimeout(hoverTimer);row.classList.remove("menu-ready");if(!row.classList.contains("show-reactions"))closeMessageMenu(row)});
       window.addEventListener("resize",function(){if(row.classList.contains("show-reactions"))positionQuickbar()});
       var pressTimer=null,pressTriggered=false;
