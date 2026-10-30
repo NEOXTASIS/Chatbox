@@ -576,6 +576,28 @@ button:active{transform:scale(.96)}
 .composer-shell>.send{animation:cbSendEntrance .45s cubic-bezier(.2,1.5,.4,1) both}
 @media(max-width:480px){.composer{padding-left:10px!important;padding-right:10px!important}.composer-shell{gap:6px;padding:6px 7px 6px 8px;min-height:52px}.composer-tools{flex-basis:36px!important;width:36px!important;min-width:36px!important}.composer-plus,.composer-shell>.send{width:36px!important;height:36px!important;flex-basis:36px!important}#msg{min-height:36px!important;height:36px!important}}
 @media(prefers-reduced-motion:reduce){.composer-shell,.composer-shell>.send,.composer-options .emoji-toggle{animation:none!important}}
+
+/* Consistent thin-line SVG icon system */
+.composer-plus svg,.composer-options .emoji-toggle svg,.composer-shell>.send svg{width:23px;height:23px;display:block;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.composer-plus svg{width:24px;height:24px;transition:transform .28s cubic-bezier(.2,1.4,.4,1)}
+.composer-plus[aria-expanded="true"] svg{transform:rotate(45deg)}
+.composer-options .emoji-toggle{font-size:0!important}
+.composer-options .emoji-toggle::before{content:none!important;display:none!important}
+.composer-options .emoji-toggle svg{width:22px;height:22px;stroke-width:1.65}
+.composer-options .emoji-toggle:hover svg{transform:scale(1.08)}
+.composer-shell>.send svg{width:23px;height:23px;stroke-width:2.2}
+.voice-visualizer{height:74px;display:flex;align-items:center;justify-content:center;gap:4px;margin:18px auto 12px;padding:0 8px;max-width:360px;border-radius:22px;background:rgba(255,255,255,.035);border:1px solid rgba(255,255,255,.07);overflow:hidden}
+.voice-visualizer span{display:block;width:4px;height:calc(7px + (var(--i) % 5)*3px);border-radius:999px;background:linear-gradient(180deg,#c8bdff,#7ce1d4);opacity:.48;transform:scaleY(.55);transition:opacity .2s}
+.voice-card .voice-visualizer span{animation:voiceIdleWave 1.6s ease-in-out infinite;animation-delay:calc(var(--i)*-.075s)}
+.voice-card .voice-visualizer span:nth-child(3n){height:28px}.voice-card .voice-visualizer span:nth-child(4n){height:18px}.voice-card .voice-visualizer span:nth-child(5n){height:35px}
+.voice-card.is-recording .voice-visualizer{border-color:rgba(255,100,120,.3);box-shadow:0 0 32px rgba(255,70,100,.09)}
+.voice-card.is-recording .voice-visualizer span{background:linear-gradient(180deg,#ff9ba9,#ff4d73);opacity:1;animation:voiceLiveWave .62s ease-in-out infinite alternate;animation-delay:calc(var(--i)*-.04s)}
+.voice-card.is-recording #voiceRecord{background:linear-gradient(135deg,#ffb0b9,#ff5576)!important;color:#271016!important;box-shadow:0 0 0 5px rgba(255,75,110,.1),0 0 28px rgba(255,75,110,.18)}
+.voice-card #voiceRecord{transition:transform .22s cubic-bezier(.2,1.5,.4,1),box-shadow .25s,background .25s}
+.voice-card #voiceRecord:active{transform:scale(.94)}
+@keyframes voiceIdleWave{0%,100%{transform:scaleY(.45);opacity:.38}50%{transform:scaleY(.9);opacity:.72}}
+@keyframes voiceLiveWave{0%{transform:scaleY(.22)}100%{transform:scaleY(1.35)}}
+@media(prefers-reduced-motion:reduce){.voice-card .voice-visualizer span{animation:none!important}}
 </style>
 </head>
 <body>
@@ -662,17 +684,17 @@ button:active{transform:scale(.96)}
       <div id="emojiPicker" class="emoji-picker" hidden aria-label="Choose an emoji"></div>
       <div class="composer-shell">
         <div class="composer-tools">
-          <button id="composerPlus" class="emoji-toggle composer-plus" type="button" aria-label="More message options" aria-expanded="false" title="More options">＋</button>
+          <button id="composerPlus" class="emoji-toggle composer-plus" type="button" aria-label="More message options" aria-expanded="false" title="More options"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button>
           <div id="composerOptions" class="composer-options" hidden aria-label="Message options">
-            <button id="emojiToggle" class="emoji-toggle line-tool emoji-tool" type="button" aria-label="Add emoji" title="Add emoji">☺</button>
-            <button id="attachBtn" class="emoji-toggle line-tool attach-tool" type="button" aria-label="Attach a file" title="Attach image or file">⌁</button>
-            <button id="cameraBtn" class="emoji-toggle line-tool camera-tool" type="button" aria-label="Take a picture" title="Take a picture">▢</button>
-            <button id="voiceBtn" class="emoji-toggle line-tool voice-tool" type="button" aria-label="Record a voice message" title="Record a voice message">♩</button>
+            <button id="emojiToggle" class="emoji-toggle line-tool emoji-tool" type="button" aria-label="Add emoji" title="Add emoji"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M8.5 14s1.2 2 3.5 2 3.5-2 3.5-2M9 9.5h.01M15 9.5h.01"/></svg></button>
+            <button id="attachBtn" class="emoji-toggle line-tool attach-tool" type="button" aria-label="Attach a file" title="Attach image or file"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m8.5 12.5 6.8-6.8a4 4 0 0 1 5.7 5.7l-9.2 9.2a6 6 0 0 1-8.5-8.5l9.2-9.2"/></svg></button>
+            <button id="cameraBtn" class="emoji-toggle line-tool camera-tool" type="button" aria-label="Take a picture" title="Take a picture"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h4l1.5-2h5L16 8h4v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg></button>
+            <button id="voiceBtn" class="emoji-toggle line-tool voice-tool" type="button" aria-label="Record a voice message" title="Record a voice message"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="12" rx="3"/><path d="M5.5 11.5a6.5 6.5 0 0 0 13 0M12 18v3M9 21h6"/></svg></button>
           </div>
         </div>
         <input id="attachInput" type="file" accept="image/*,.pdf,.txt,.doc,.docx,.xls,.xlsx,.zip" hidden>
         <textarea id="msg" rows="1" maxlength="2000" placeholder="Message" aria-label="Write a message"></textarea>
-        <button id="send" class="send" aria-label="Send message">↑</button>
+        <button id="send" class="send" aria-label="Send message"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 19V5M6 11l6-6 6 6"/></svg></button>
       </div>
     </div>
   </section>
@@ -680,7 +702,7 @@ button:active{transform:scale(.96)}
 
 <div id="cameraModal" class="modal" hidden><div class="card camera-card" role="dialog" aria-label="Take a picture"><div class="camera-top"><h2>Camera</h2><button id="cameraClose" class="camera-close" type="button" aria-label="Close camera">×</button></div><video id="cameraVideo" autoplay playsinline muted></video><div class="camera-controls"><button id="cameraCancel" class="camera-cancel" type="button" aria-label="Cancel camera">×</button><button id="cameraCapture" class="camera-shutter" type="button" aria-label="Take photo" title="Take photo"></button></div><p id="cameraError" class="err"></p></div></div>
 <div id="attachmentsModal" class="modal" hidden><div class="card attachment-library" role="dialog" aria-label="Chat attachments"><div class="camera-top"><h2>Attachments</h2><button id="attachmentsClose" class="camera-close" type="button" aria-label="Close attachments">×</button></div><div class="attachment-tabs"><button id="attachmentsImagesTab" class="active" type="button">Images</button><button id="attachmentsVoiceTab" type="button">Voice messages</button></div><div id="attachmentsList" class="attachment-list"></div><p id="attachmentsStatus" class="out" aria-live="polite"></p></div></div>
-<div id="voiceModal" class="modal" hidden><div class="card voice-card" role="dialog" aria-label="Record a voice message"><h2>Voice message</h2><p>Record a short message. The current app attachment limit is 280 KB.</p><div id="voiceStatus" class="voice-status" aria-live="polite">Ready to record.</div><div class="btns"><button id="voiceCancel" class="btn" type="button">Cancel</button><button id="voiceRecord" class="btn" type="button">● Record</button><button id="voiceSend" class="btn primary" type="button" disabled>Send voice</button></div><p id="voiceError" class="err"></p></div></div>
+<div id="voiceModal" class="modal" hidden><div class="card voice-card" role="dialog" aria-label="Record a voice message"><h2>Voice message</h2><p>Record a short message. The current app attachment limit is 280 KB.</p><div class="voice-visualizer" aria-hidden="true"><span style="--i:0"></span><span style="--i:1"></span><span style="--i:2"></span><span style="--i:3"></span><span style="--i:4"></span><span style="--i:5"></span><span style="--i:6"></span><span style="--i:7"></span><span style="--i:8"></span><span style="--i:9"></span><span style="--i:10"></span><span style="--i:11"></span><span style="--i:12"></span><span style="--i:13"></span><span style="--i:14"></span><span style="--i:15"></span><span style="--i:16"></span><span style="--i:17"></span><span style="--i:18"></span><span style="--i:19"></span><span style="--i:20"></span><span style="--i:21"></span><span style="--i:22"></span><span style="--i:23"></span><span style="--i:24"></span></div><div id="voiceStatus" class="voice-status" aria-live="polite">Ready to record.</div><div class="btns"><button id="voiceCancel" class="btn" type="button">Cancel</button><button id="voiceRecord" class="btn" type="button">● Record</button><button id="voiceSend" class="btn primary" type="button" disabled>Send voice</button></div><p id="voiceError" class="err"></p></div></div>
 
 <div id="modal" class="modal" hidden>
   <div class="card" role="dialog" aria-label="Your profile">
@@ -1203,7 +1225,7 @@ if(m.attachment&&m.attachment.data){
   $("attachInput").addEventListener("change",function(){var file=this.files&&this.files[0];this.value="";if(!file)return;fileToAttachment(file).then(function(a){send(a)}).catch(function(e){toast(e.message||"Couldn’t read that file.")})});
   var voiceRecorder=null,voiceStream=null,voiceChunks=[],voiceBlob=null,voiceMime="";
   function stopVoiceStream(){if(voiceStream){voiceStream.getTracks().forEach(function(t){t.stop()});voiceStream=null}}
-  function closeVoiceModal(){if(voiceRecorder&&voiceRecorder.state==="recording"){try{voiceRecorder.stop()}catch(e){}}stopVoiceStream();$("voiceModal").hidden=true}
+  function closeVoiceModal(){$("voiceModal").classList.remove("is-recording");if(voiceRecorder&&voiceRecorder.state==="recording"){try{voiceRecorder.stop()}catch(e){}}stopVoiceStream();$("voiceModal").hidden=true}
   function voiceSupportedMime(){
     if(!window.MediaRecorder)return "";
     var types=["audio/mp4;codecs=mp4a.40.2","audio/mp4","audio/webm;codecs=opus","audio/webm","audio/ogg;codecs=opus"];
@@ -1226,13 +1248,13 @@ if(m.attachment&&m.attachment.data){
       voiceRecorder.ondataavailable=function(ev){if(ev.data&&ev.data.size)voiceChunks.push(ev.data)};
       voiceRecorder.onerror=function(){$("voiceError").textContent="Recording failed. Please try again.";$("voiceRecord").disabled=false;$("voiceSend").disabled=true;stopVoiceStream()};
       voiceRecorder.onstop=function(){
-        stopVoiceStream();voiceBlob=new Blob(voiceChunks,{type:voiceRecorder.mimeType||voiceMime||"audio/mp4"});
+        $("voiceModal").classList.remove("is-recording");stopVoiceStream();voiceBlob=new Blob(voiceChunks,{type:voiceRecorder.mimeType||voiceMime||"audio/mp4"});
         $("voiceRecord").disabled=false;$("voiceRecord").textContent="↻ Record again";
         if(voiceBlob.size>280*1024){$("voiceStatus").textContent="Recording is too large ("+Math.ceil(voiceBlob.size/1024)+" KB).";$("voiceError").textContent="The app currently supports attachments up to 280 KB. Please record a shorter message.";$("voiceSend").disabled=true;return}
         if(!voiceBlob.size){$("voiceStatus").textContent="No audio captured.";$("voiceSend").disabled=true;return}
         $("voiceStatus").textContent="Recording ready · "+Math.ceil(voiceBlob.size/1024)+" KB";$("voiceSend").disabled=false;
       };
-      try{voiceRecorder.start(250)}catch(startErr){stopVoiceStream();$("voiceError").textContent="Could not start recording in this browser. Try again.";$("voiceStatus").textContent="Not recording.";return}$("voiceRecord").textContent="■ Stop";$("voiceStatus").textContent="Recording…";$("voiceSend").disabled=true;window.setTimeout(function(){if(voiceRecorder&&voiceRecorder.state==="recording")voiceRecorder.stop()},10000);
+      try{voiceRecorder.start(250)}catch(startErr){stopVoiceStream();$("voiceError").textContent="Could not start recording in this browser. Try again.";$("voiceStatus").textContent="Not recording.";return}$("voiceModal").classList.add("is-recording");$("voiceRecord").textContent="■ Stop";$("voiceStatus").textContent="Recording…";$("voiceSend").disabled=true;window.setTimeout(function(){if(voiceRecorder&&voiceRecorder.state==="recording")voiceRecorder.stop()},10000);
     }).catch(function(err){$("voiceError").textContent=err&&err.name==="NotAllowedError"?"Microphone access was denied. Allow microphone access in browser settings.":"Could not start recording. Try again or attach an audio file.";$("voiceStatus").textContent="Not recording."});
   });
   $("voiceSend").addEventListener("click",function(){
