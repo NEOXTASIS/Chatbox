@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -128,6 +129,16 @@ button:focus-visible{outline:2px solid #fff;outline-offset:2px}
 .menu-action:hover{background:rgba(255,255,255,.16)}.menu-action.danger{color:#ff9a91}
 .reactions{align-self:flex-start}.row.mine .reactions{align-self:flex-end}
 .dl{display:none!important}
+/* Reply preview inspired by Messenger/iMessage: muted, compact, and above the composer. */
+.reply-preview{display:flex;align-items:center;gap:10px;padding:9px 14px;margin:0 14px 2px;background:rgba(255,255,255,.055);border-left:3px solid rgba(255,255,255,.42);border-radius:10px;color:var(--muted);font-size:12px;opacity:.82;min-width:0}
+.reply-preview[hidden]{display:none!important}
+.reply-preview-copy{min-width:0;flex:1;display:grid;gap:3px}
+.reply-preview-name{font-size:11px;font-weight:700;color:var(--text);opacity:.8}
+.reply-preview-text{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;opacity:.72}
+.reply-preview-cancel{flex:none;width:28px;height:28px;border-radius:50%;background:rgba(255,255,255,.08);color:var(--text);font-size:18px;line-height:1}
+.reply-quote{max-width:100%;margin:0 4px 5px;padding:7px 10px;border-left:3px solid rgba(255,255,255,.45);border-radius:7px;background:rgba(255,255,255,.07);opacity:.68;font-size:12px;line-height:1.35;overflow:hidden}
+.row.mine .reply-quote{border-left-color:rgba(0,0,0,.42);background:rgba(0,0,0,.07);color:inherit}
+.reply-quote-name{font-weight:700;display:block;margin-bottom:2px;opacity:.9}
 /* emoji picker and message reactions */
 .composer{position:relative;flex:none;display:flex;align-items:flex-end;gap:10px;padding:12px 16px 16px}
 .emoji-toggle{flex:none;width:44px;height:44px;border-radius:50%;background:var(--hover);font-size:23px;display:grid;place-items:center}
@@ -236,6 +247,10 @@ button:focus-visible{outline:2px solid #fff;outline-offset:2px}
       <button id="me" class="me" hidden aria-label="Edit your profile"></button>
     </header>
     <div id="thread" class="thread" aria-live="polite"></div>
+    <div id="replyPreview" class="reply-preview" hidden aria-live="polite">
+      <div class="reply-preview-copy"><span id="replyPreviewName" class="reply-preview-name"></span><span id="replyPreviewText" class="reply-preview-text"></span></div>
+      <button id="replyPreviewCancel" class="reply-preview-cancel" type="button" aria-label="Cancel reply">×</button>
+    </div>
     <div class="composer">
       <div id="emojiPicker" class="emoji-picker" hidden aria-label="Choose an emoji"></div>
       <button id="emojiToggle" class="emoji-toggle" type="button" aria-label="Add emoji" title="Add emoji">☺</button>
@@ -278,7 +293,7 @@ button:focus-visible{outline:2px solid #fff;outline-offset:2px}
 (function(){
   var $=function(id){return document.getElementById(id)};
   var PAGE=100;
-  var auth=null,db=null,uid=null,isOwner=false,profiles={},msgs=[],mine=null,stickNext=true,newAvatar="",required=false,toastT=null;
+  var auth=null,db=null,uid=null,isOwner=false,profiles={},msgs=[],mine=null,stickNext=true,newAvatar="",required=false,toastT=null,replyTarget=null;
   var unsubs=[],msgUnsub=null,handledDenied=false,room=null,limitN=PAGE,hasMore=false,anchor=null,allowedList=[],pendingList=[],authMode="login",authBusy=false;
   var audioCtx=null,alertsEnabled=false,firstSnapshotByRoom={},knownMessageIds={},lastAlertAt=0;
   var ALERTS_STORAGE_KEY="chatboxAlertsEnabled";
@@ -489,6 +504,12 @@ button:focus-visible{outline:2px solid #fff;outline-offset:2px}
       if(!isMe){var w=el("div","avw");if(first)w.appendChild(avatar(p));row.appendChild(w)}
       var col=el("div","col");
       if(first)col.appendChild(el("div","meta",tm(m.t)));
+      if(m.replyTo&&m.replyTo.text){
+        var quote=el("div","reply-quote");
+        quote.appendChild(el("span","reply-quote-name",m.replyTo.name||"Message"));
+        quote.appendChild(el("span","reply-quote-text",String(m.replyTo.text).slice(0,220)));
+        col.appendChild(quote);
+      }
       var b=el("div","bub",m.text);
       var quick=el("div","reaction-quickbar");
       function positionQuickbar(){
@@ -547,7 +568,14 @@ button:focus-visible{outline:2px solid #fff;outline-offset:2px}
         if(!menuPointerInside){menuCloseTimer=setTimeout(function(){if(!menuPointerInside)closeMessageMenu(row)},1500);}
       };
       col.appendChild(dots);
-      function quoteMessage(){var ta=$("msg");ta.value="↪ "+String(nameOf(profiles[m.uid]))+": "+String(m.text||"").split("\n")[0].slice(0,160)+"\n"+ta.value;ta.focus();fit();closeMessageMenu(row)}
+      function quoteMessage(){
+        replyTarget={id:m.id,uid:m.uid,name:String(nameOf(profiles[m.uid])||"Message"),text:String(m.text||"").split("\n")[0].slice(0,220)};
+        $("replyPreviewName").textContent="Replying to "+replyTarget.name;
+        $("replyPreviewText").textContent=replyTarget.text||"Attachment";
+        $("replyPreview").hidden=false;
+        $("msg").focus();
+        closeMessageMenu(row);
+      }
       // Incoming messages are replied to with a right-swipe on mobile; no Reply item in their menu.
       if(isMe){
         var replyBtn=el("button","menu-action","Reply");replyBtn.type="button";
@@ -612,11 +640,17 @@ button:focus-visible{outline:2px solid #fff;outline-offset:2px}
     else if(near||stickNext){th.scrollTop=th.scrollHeight;stickNext=false}
   }
   function fit(){var t=$("msg");t.style.height="auto";t.style.height=Math.min(t.scrollHeight,140)+"px"}
+  $("replyPreviewCancel").addEventListener("click",function(){replyTarget=null;$("replyPreview").hidden=true;});
   function send(){
     var ta=$("msg"),v=ta.value.trim();
     if(!v||!mine||!db||!room)return;
+    var payload={uid:uid,text:v.slice(0,2000),t:Date.now(),readBy:[]};
+    if(replyTarget)payload.replyTo={id:replyTarget.id,uid:replyTarget.uid,name:replyTarget.name,text:replyTarget.text};
+    var sentReply=replyTarget;
     ta.value="";fit();stickNext=true;
-    collFor(room).add({uid:uid,text:v.slice(0,2000),t:Date.now(),readBy:[]}).catch(function(){
+    collFor(room).add(payload).then(function(){
+      if(replyTarget===sentReply){replyTarget=null;$("replyPreview").hidden=true;}
+    }).catch(function(){
       ta.value=v;fit();toast("Couldn’t send that message.");
     });
   }
