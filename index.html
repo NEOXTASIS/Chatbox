@@ -584,12 +584,8 @@ button:focus-visible{outline:2px solid #fff;outline-offset:2px}
         $("msg").focus();
         closeMessageMenu(row);
       }
-      // Incoming messages are replied to with a right-swipe on mobile; no Reply item in their menu.
-      if(isMe){
-        var replyBtn=el("button","menu-action","Reply");replyBtn.type="button";
-        replyBtn.onclick=function(ev){ev.stopPropagation();quoteMessage()};
-        quick.appendChild(replyBtn);
-      }
+      // Reply is handled by the separate desktop reply icon or mobile swipe gesture;
+      // keep the emoji/options bar free of a text Reply button.
       if(isMe){
         var editBtn=el("button","menu-action","Edit");editBtn.type="button";
         editBtn.onclick=function(ev){ev.stopPropagation();var next=window.prompt("Edit your message:",m.text||"");if(next===null){closeMessageMenu(row);return}next=next.trim();if(!next){toast("Message cannot be empty.");return}if(next.length>2000){toast("Messages must be 2,000 characters or fewer.");return}collFor(room).doc(m.id).update({text:next,editedAt:Date.now()}).then(function(){toast("Message edited.")}).catch(function(){toast("Couldn’t edit this message. Check Firestore rules.")});closeMessageMenu(row)};
