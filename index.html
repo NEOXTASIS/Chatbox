@@ -156,7 +156,7 @@ body.theme-light{--bg:#f0f0f0;--win:#fff;--ink:#171717;--muted:#666;--dim:#85858
 .reply-quote-name{font-weight:700;display:block;margin-bottom:3px;opacity:.9}
 .reply-quote-text{display:block;white-space:pre-wrap;overflow-wrap:anywhere;opacity:.94;max-height:4.2em;overflow:hidden}
 /* emoji picker and message reactions */
-.composer{position:relative;flex:none;display:flex;align-items:flex-end;gap:8px;padding:12px 12px 16px}.composer .emoji-toggle{width:40px;height:40px;font-size:19px}.camera-card{width:min(94vw,520px)}.camera-card video{width:100%;max-height:60vh;background:#111;border-radius:12px;object-fit:cover}.attachment{display:block;max-width:min(100%,320px);max-height:320px;border-radius:12px;margin-top:7px}.attachment-link{display:inline-block;margin-top:6px;padding:7px 10px;border-radius:8px;background:rgba(255,255,255,.1);color:inherit;text-decoration:none;overflow-wrap:anywhere}
+.attachment-link{display:inline-block;margin-top:6px;padding:7px 10px;border-radius:8px;background:rgba(255,255,255,.1);color:inherit;text-decoration:none;overflow-wrap:anywhere}.voice-player{display:block;width:min(100%,320px);margin-top:8px}.youtube-player{display:block;width:min(100%,400px);aspect-ratio:16/9;border:0;border-radius:12px;margin-top:8px;background:#111}.voice-card{width:min(94vw,420px)}.voice-card p{color:var(--muted);font-size:14px;line-height:1.45}.voice-status{min-height:24px;color:var(--muted);font-size:13px}
 .emoji-toggle{flex:none;width:44px;height:44px;border-radius:50%;background:var(--hover);font-size:23px;display:grid;place-items:center}
 .emoji-toggle:hover{background:rgba(255,255,255,.14)}
 .emoji-picker{position:absolute;left:16px;bottom:70px;z-index:8;width:min(320px,calc(100vw - 32px));padding:10px;background:#171717;border:1px solid rgba(255,255,255,.12);border-radius:16px;box-shadow:0 16px 40px rgba(0,0,0,.55);display:grid;grid-template-columns:repeat(8,minmax(0,1fr));gap:4px}
@@ -538,7 +538,8 @@ body #msg { background:rgba(128,128,128,.10) !important; }
       <div id="emojiPicker" class="emoji-picker" hidden aria-label="Choose an emoji"></div>
       <button id="emojiToggle" class="emoji-toggle" type="button" aria-label="Add emoji" title="Add emoji">☺</button>
       <button id="attachBtn" class="emoji-toggle" type="button" aria-label="Attach a file" title="Send a picture or file">📎</button>
-      <button id="cameraBtn" class="emoji-toggle" type="button" aria-label="Take a picture" title="Take a picture">📸</button>
+id="cameraBtn" class="emoji-toggle" type="button" aria-label="Take a picture" title="Take a picture">📸</button>
+      <button id="voiceBtn" class="emoji-toggle" type="button" aria-label="Record a voice message" title="Record a voice message">🎙️</button>
       <input id="attachInput" type="file" accept="image/*,.pdf,.txt,.doc,.docx,.xls,.xlsx,.zip" hidden>
       <textarea id="msg" rows="1" maxlength="2000" placeholder="Message" aria-label="Write a message"></textarea>
       <button id="send" class="send" aria-label="Send message">↑</button>
@@ -547,6 +548,7 @@ body #msg { background:rgba(128,128,128,.10) !important; }
 </main>
 
 <div id="cameraModal" class="modal" hidden><div class="card camera-card" role="dialog" aria-label="Take a picture"><h2>Take a picture</h2><video id="cameraVideo" autoplay playsinline></video><div class="btns"><button id="cameraCancel" class="btn" type="button">Cancel</button><button id="cameraCapture" class="btn primary" type="button">Capture</button></div><p id="cameraError" class="err"></p></div></div>
+<div id="voiceModal" class="modal" hidden><div class="card voice-card" role="dialog" aria-label="Record a voice message"><h2>Voice message</h2><p>Record a short message. The current app attachment limit is 280 KB.</p><div id="voiceStatus" class="voice-status" aria-live="polite">Ready to record.</div><div class="btns"><button id="voiceCancel" class="btn" type="button">Cancel</button><button id="voiceRecord" class="btn" type="button">● Record</button><button id="voiceSend" class="btn primary" type="button" disabled>Send voice</button></div><p id="voiceError" class="err"></p></div></div>
 
 <div id="modal" class="modal" hidden>
   <div class="card" role="dialog" aria-label="Your profile">
@@ -817,7 +819,9 @@ body #msg { background:rgba(128,128,128,.10) !important; }
         quote.appendChild(el("span","reply-quote-text",String(m.replyTo.text).slice(0,220)));
         col.appendChild(quote);
       }
-      var b=el("div","bub",m.text);
+var b=el("div","bub",m.text);
+      var yt=extractYouTubeId(m.text||"");
+      if(yt){var frame=document.createElement("iframe");frame.className="youtube-player";frame.src="https://www.youtube-nocookie.com/embed/"+yt;frame.title="YouTube video player";frame.loading="lazy";frame.referrerPolicy="strict-origin-when-cross-origin";frame.allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share";frame.allowFullscreen=true;frame.setAttribute("sandbox","allow-scripts allow-same-origin allow-presentation allow-popups");b.appendChild(frame)}
       var quick=el("div","reaction-quickbar");
       // Keep the emoji/options bar reaction-only: remove any legacy text Reply action.
       function removeQuickbarReplyButtons(){Array.prototype.slice.call(quick.querySelectorAll("button")).forEach(function(btn){if((btn.textContent||"").trim().toLowerCase()==="reply"||btn.getAttribute("aria-label")==="Reply"){btn.remove();}});}
@@ -901,7 +905,12 @@ body #msg { background:rgba(128,128,128,.10) !important; }
       }
       removeQuickbarReplyButtons();
       col.appendChild(quick);col.appendChild(b);
-      if(m.attachment&&m.attachment.data){if(/^image\//.test(m.attachment.type||"")){var ai=document.createElement("img");ai.className="attachment";ai.src=m.attachment.data;ai.alt=m.attachment.name||"Attached image";col.appendChild(ai)}var al=document.createElement("a");al.className="attachment-link";al.href=m.attachment.data;al.download=m.attachment.name||"attachment";al.textContent="📎 "+(m.attachment.name||"Download attachment");al.target="_blank";al.rel="noopener";col.appendChild(al)}
+if(m.attachment&&m.attachment.data){
+        var atype=m.attachment.type||"";
+        if(/^image\//.test(atype)){var ai=document.createElement("img");ai.className="attachment";ai.src=m.attachment.data;ai.alt=m.attachment.name||"Attached image";col.appendChild(ai)}
+        else if(/^audio\//.test(atype)){var au=document.createElement("audio");au.className="voice-player";au.controls=true;au.preload="metadata";au.src=m.attachment.data;col.appendChild(au)}
+        var al=document.createElement("a");al.className="attachment-link";al.href=m.attachment.data;al.download=m.attachment.name||"attachment";al.textContent=/^audio\//.test(atype)?"⬇ Download voice message":"📎 "+(m.attachment.name||"Download attachment");al.target="_blank";al.rel="noopener";col.appendChild(al)
+      }
       var hoverTimer=null;
       row.addEventListener("mouseenter",function(){clearTimeout(hoverTimer);hoverTimer=setTimeout(function(){row.classList.add("menu-ready")},1000)});
       row.addEventListener("mouseleave",function(){clearTimeout(hoverTimer);row.classList.remove("menu-ready");if(!row.classList.contains("show-reactions"))closeMessageMenu(row)});
@@ -964,6 +973,11 @@ body #msg { background:rgba(128,128,128,.10) !important; }
   $("muteBtn").addEventListener("click",function(){if(!room)return;if(mutedChats[room])delete mutedChats[room];else mutedChats[room]=true;saveUserMap("chatboxMuted",mutedChats);paintTitle();toast(mutedChats[room]?"Notifications muted for this chat.":"Notifications enabled for this chat.")});
   $("jumpLatest").addEventListener("click",function(){var th=$("thread");th.scrollTop=th.scrollHeight;$("jumpLatest").hidden=true});
   $("thread").addEventListener("scroll",function(){var th=$("thread");$("jumpLatest").hidden=th.scrollHeight-th.scrollTop-th.clientHeight<160||!!searchQuery},{passive:true});
+  function extractYouTubeId(text){
+    var raw=String(text||"");
+    var match=raw.match(/(?:https?:\/\/)?(?:www\.|m\.)?(?:youtube\.com\/(?:watch\?(?:[^#\s]*&)?v=|embed\/|shorts\/|live\/)|youtu\.be\/)([A-Za-z0-9_-]{11})/i);
+    return match?match[1]:null;
+  }
   function send(attachment){
     var ta=$("msg"),v=ta.value.trim();
     if((!v&&!attachment)||!mine||!db||!room)return;
@@ -987,6 +1001,50 @@ body #msg { background:rgba(128,128,128,.10) !important; }
   }
   $("attachBtn").addEventListener("click",function(){if(!room){toast("Open a private chat first.");return}$("attachInput").click()});
   $("attachInput").addEventListener("change",function(){var file=this.files&&this.files[0];this.value="";if(!file)return;fileToAttachment(file).then(function(a){send(a)}).catch(function(e){toast(e.message||"Couldn’t read that file.")})});
+  var voiceRecorder=null,voiceStream=null,voiceChunks=[],voiceBlob=null,voiceMime="";
+  function stopVoiceStream(){if(voiceStream){voiceStream.getTracks().forEach(function(t){t.stop()});voiceStream=null}}
+  function closeVoiceModal(){if(voiceRecorder&&voiceRecorder.state==="recording"){try{voiceRecorder.stop()}catch(e){}}stopVoiceStream();$("voiceModal").hidden=true}
+  function voiceSupportedMime(){
+    if(!window.MediaRecorder)return "";
+    var types=["audio/mp4","audio/webm;codecs=opus","audio/webm","audio/ogg;codecs=opus"];
+    for(var i=0;i<types.length;i++){try{if(MediaRecorder.isTypeSupported(types[i]))return types[i]}catch(e){}}
+    return "";
+  }
+  $("voiceBtn").addEventListener("click",function(){
+    if(!room){toast("Open a private chat first.");return}
+    if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia||!window.MediaRecorder){toast("Voice recording is not supported in this browser. Try attaching an audio file instead.");return}
+    voiceBlob=null;voiceChunks=[];$("voiceError").textContent="";$("voiceStatus").textContent="Ready to record.";$("voiceRecord").disabled=false;$("voiceRecord").textContent="● Record";$("voiceSend").disabled=true;$("voiceModal").hidden=false;
+  });
+  $("voiceCancel").addEventListener("click",function(){closeVoiceModal()});
+  $("voiceRecord").addEventListener("click",function(){
+    if(voiceRecorder&&voiceRecorder.state==="recording"){voiceRecorder.stop();$("voiceRecord").disabled=true;$("voiceStatus").textContent="Finishing recording…";return}
+    $("voiceError").textContent="";
+    var mime=voiceSupportedMime();
+    navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true}}).then(function(stream){
+      voiceStream=stream;voiceChunks=[];voiceMime=mime;
+      try{voiceRecorder=mime?new MediaRecorder(stream,{mimeType:mime}):new MediaRecorder(stream)}catch(err){stopVoiceStream();throw err}
+      voiceRecorder.ondataavailable=function(ev){if(ev.data&&ev.data.size)voiceChunks.push(ev.data)};
+      voiceRecorder.onerror=function(){$("voiceError").textContent="Recording failed. Please try again.";$("voiceRecord").disabled=false;$("voiceSend").disabled=true;stopVoiceStream()};
+      voiceRecorder.onstop=function(){
+        stopVoiceStream();voiceBlob=new Blob(voiceChunks,{type:voiceRecorder.mimeType||voiceMime||"audio/mp4"});
+        $("voiceRecord").disabled=false;$("voiceRecord").textContent="↻ Record again";
+        if(voiceBlob.size>280*1024){$("voiceStatus").textContent="Recording is too large ("+Math.ceil(voiceBlob.size/1024)+" KB).";$("voiceError").textContent="The app currently supports attachments up to 280 KB. Please record a shorter message.";$("voiceSend").disabled=true;return}
+        if(!voiceBlob.size){$("voiceStatus").textContent="No audio captured.";$("voiceSend").disabled=true;return}
+        $("voiceStatus").textContent="Recording ready · "+Math.ceil(voiceBlob.size/1024)+" KB";$("voiceSend").disabled=false;
+      };
+      voiceRecorder.start();$("voiceRecord").textContent="■ Stop";$("voiceStatus").textContent="Recording… (tap Stop when finished)";$("voiceSend").disabled=true;
+      window.setTimeout(function(){if(voiceRecorder&&voiceRecorder.state==="recording")voiceRecorder.stop()},15000);
+    }).catch(function(err){$("voiceError").textContent=err&&err.name==="NotAllowedError"?"Microphone access was denied. Allow microphone access in browser settings.":"Could not start recording. Try again or attach an audio file.";$("voiceStatus").textContent="Not recording."});
+  });
+  $("voiceSend").addEventListener("click",function(){
+    if(!voiceBlob||voiceBlob.size>280*1024||!room)return;
+    var ext=/mp4/i.test(voiceBlob.type)?"m4a":/ogg/i.test(voiceBlob.type)?"ogg":"webm";
+    var name="voice-message-"+Date.now()+"."+ext,reader=new FileReader();
+    reader.onload=function(){send({name:name,type:voiceBlob.type||"audio/mp4",data:String(reader.result||"")});closeVoiceModal()};
+    reader.onerror=function(){$("voiceError").textContent="Could not prepare the recording. Please try again."};
+    reader.readAsDataURL(voiceBlob);
+  });
+  $("voiceModal").addEventListener("click",function(ev){if(ev.target===$("voiceModal"))closeVoiceModal()});
   var cameraStream=null;
   function stopCamera(){if(cameraStream){cameraStream.getTracks().forEach(function(t){t.stop()});cameraStream=null}$("cameraVideo").srcObject=null;$("cameraModal").hidden=true}
   $("cameraBtn").addEventListener("click",function(){
