@@ -671,6 +671,26 @@ button:active{transform:scale(.96)}
  .composer-shell{gap:7px!important}
  .composer-shell .composer-tools{height:36px!important}
 }
+
+/* Seamless composer: one continuous pill, no separate message-input box */
+.composer-shell #msg{
+  font-size:14px!important;
+  border:0!important;
+  outline:none!important;
+  box-shadow:none!important;
+  background:transparent!important;
+  border-radius:0!important;
+  appearance:none!important;
+  -webkit-appearance:none!important;
+}
+.composer-shell #msg:focus,
+.composer-shell #msg:active{
+  border:0!important;
+  outline:none!important;
+  box-shadow:none!important;
+  background:transparent!important;
+}
+.composer-shell #msg::placeholder{font-size:14px!important}
 </style>
 </head>
 <body>
