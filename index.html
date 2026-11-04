@@ -886,7 +886,7 @@ body.theme-light .mark{background:linear-gradient(145deg,rgba(180,180,180,.45),r
 </main>
 
 <div id="cameraModal" class="modal" hidden><div class="card camera-card" role="dialog" aria-label="Take a picture"><div class="camera-top"><h2>Camera</h2><button id="cameraClose" class="camera-close" type="button" aria-label="Close camera">×</button></div><video id="cameraVideo" autoplay playsinline muted></video><div class="camera-controls"><button id="cameraCancel" class="camera-cancel" type="button" aria-label="Cancel camera">×</button><button id="cameraCapture" class="camera-shutter" type="button" aria-label="Take photo" title="Take photo"></button></div><p id="cameraError" class="err"></p></div></div>
-<div id="attachmentsModal" class="modal" hidden><div class="card attachment-library" role="dialog" aria-label="Chat attachments"><div class="camera-top"><h2>Attachments</h2><button id="attachmentsClose" class="camera-close" type="button" aria-label="Close attachments">×</button></div><div class="attachment-tabs"><button id="attachmentsImagesTab" class="active" type="button">Images</button><button id="attachmentsVoiceTab" type="button">Voice messages</button></div><div id="attachmentsList" class="attachment-list"></div><p id="attachmentsStatus" class="out" aria-live="polite"></p></div></div>
+<div id="attachmentsModal" class="modal" hidden><div class="card attachment-library" role="dialog" aria-label="Chat attachments"><div class="camera-top"><h2>Attachments</h2><button id="attachmentsClose" class="camera-close" type="button" aria-label="Close attachments">×</button></div><div class="attachment-tabs"><button id="attachmentsImagesTab" class="active" type="button">Photos</button><button id="attachmentsVideosTab" type="button">Videos</button><button id="attachmentsVoiceTab" type="button">Voice messages</button></div><div id="attachmentsList" class="attachment-list"></div><p id="attachmentsStatus" class="out" aria-live="polite"></p></div></div>
 <div id="voiceModal" class="modal" hidden><div class="card voice-card" role="dialog" aria-label="Record a voice message"><h2>Voice message</h2><p>Record a short message. The current app attachment limit is 280 KB.</p><div class="voice-visualizer" aria-hidden="true"><span style="--i:0"></span><span style="--i:1"></span><span style="--i:2"></span><span style="--i:3"></span><span style="--i:4"></span><span style="--i:5"></span><span style="--i:6"></span><span style="--i:7"></span><span style="--i:8"></span><span style="--i:9"></span><span style="--i:10"></span><span style="--i:11"></span><span style="--i:12"></span><span style="--i:13"></span><span style="--i:14"></span><span style="--i:15"></span><span style="--i:16"></span><span style="--i:17"></span><span style="--i:18"></span><span style="--i:19"></span><span style="--i:20"></span><span style="--i:21"></span><span style="--i:22"></span><span style="--i:23"></span><span style="--i:24"></span></div><div id="voiceStatus" class="voice-status" aria-live="polite">Ready to record.</div><div class="btns"><button id="voiceCancel" class="btn" type="button">Cancel</button><button id="voiceRecord" class="btn" type="button">● Record</button><button id="voiceSend" class="btn primary" type="button" disabled>Send voice</button></div><p id="voiceError" class="err"></p></div></div>
 
 <div id="modal" class="modal" hidden>
@@ -1278,7 +1278,7 @@ var messageText=String(m.text||"");
       col.appendChild(quick);if(!(m.attachment&&m.attachment.data&&/^(?:📎 Attachment|🎙️ Voice message|📷 Photo|camera-.*\.jpg)$/i.test((m.text||"").trim())))col.appendChild(b);
 if(m.attachment&&m.attachment.data){
         var atype=m.attachment.type||"";
-        if(/^image\//.test(atype)){var ai=document.createElement("img");ai.className="attachment";ai.src=m.attachment.data;ai.alt="Sent image";ai.addEventListener("click",function(){openImageLightbox(m.attachment.data)});col.appendChild(ai)}else if(/^audio\//.test(atype)){col.appendChild(makeVoicePlayer(m.attachment.data))}else{var al=document.createElement("a");al.className="attachment-link";al.href=m.attachment.data;al.download=m.attachment.name||"attachment";al.textContent="📎 "+(m.attachment.name||"Download attachment");al.target="_blank";al.rel="noopener";col.appendChild(al)}
+        if(/^image\//.test(atype)){var ai=document.createElement("img");ai.className="attachment";ai.src=m.attachment.data;ai.alt="Sent image";ai.addEventListener("click",function(){openImageLightbox(m.attachment.data)});col.appendChild(ai)}else if(/^video\//.test(atype)){var av=document.createElement("video");av.className="chat-video";av.src=m.attachment.data;av.controls=true;av.playsInline=true;av.preload="metadata";col.appendChild(av)}else if(/^audio\//.test(atype)){col.appendChild(makeVoicePlayer(m.attachment.data))}else{var al=document.createElement("a");al.className="attachment-link";al.href=m.attachment.data;al.download=m.attachment.name||"attachment";al.textContent="📎 "+(m.attachment.name||"Download attachment");al.target="_blank";al.rel="noopener";col.appendChild(al)}
       }
       var hoverTimer=null;
       row.addEventListener("mouseenter",function(){clearTimeout(hoverTimer);hoverTimer=setTimeout(function(){row.classList.add("menu-ready")},1000)});
@@ -1346,17 +1346,19 @@ if(m.attachment&&m.attachment.data){
     var root=$("attachmentsList");root.textContent="";var groups={};
     items.forEach(function(m){
       var a=m.attachment;if(!a||!a.data)return;var type=a.type||"";
-      var wanted=attachmentMode==="images"?(type.indexOf("image/")===0):(type.indexOf("audio/")===0);
+      var wanted=attachmentMode==="images"?(type.indexOf("image/")===0):attachmentMode==="videos"?(type.indexOf("video/")===0):(type.indexOf("audio/")===0);
       if(!wanted)return;var key=dateLabel(m.t);if(!groups[key])groups[key]=[];groups[key].push(m);
     });
     var keys=Object.keys(groups);
-    if(!keys.length){var empty=document.createElement("div");empty.className="attachment-empty";empty.textContent=attachmentMode==="images"?"No images found in this conversation.":"No voice messages found in this conversation.";root.appendChild(empty);return}
+    if(!keys.length){var empty=document.createElement("div");empty.className="attachment-empty";empty.textContent=attachmentMode==="images"?"No photos found in this conversation.":attachmentMode==="videos"?"No videos found in this conversation.":"No voice messages found in this conversation.";root.appendChild(empty);return}
     keys.forEach(function(key){
       var section=document.createElement("section");var heading=document.createElement("div");heading.className="attachment-date";heading.textContent=key;section.appendChild(heading);
       if(attachmentMode==="images"){
         var grid=document.createElement("div");grid.className="attachment-grid";
         groups[key].forEach(function(m){var link=document.createElement("a");link.href=m.attachment.data;link.target="_blank";link.rel="noopener";var img=document.createElement("img");img.className="attachment-thumb";img.src=m.attachment.data;img.alt=m.attachment.name||"Sent image";link.appendChild(img);grid.appendChild(link)});
         section.appendChild(grid);
+      }else if(attachmentMode==="videos"){
+        groups[key].forEach(function(m){var item=document.createElement("div");item.className="attachment-voice-item";var video=document.createElement("video");video.className="chat-video";video.controls=true;video.playsInline=true;video.preload="metadata";video.src=m.attachment.data;item.appendChild(video);var time=document.createElement("span");time.className="voice-time";time.textContent=new Date(m.t).toLocaleTimeString([],{hour:"numeric",minute:"2-digit"});item.appendChild(time);section.appendChild(item)});
       }else{
         groups[key].forEach(function(m){var item=document.createElement("div");item.className="attachment-voice-item";item.appendChild(makeVoicePlayer(m.attachment.data));var time=document.createElement("span");time.className="voice-time";time.textContent=new Date(m.t).toLocaleTimeString([],{hour:"numeric",minute:"2-digit"});item.appendChild(time);section.appendChild(item)});
       }
@@ -1374,14 +1376,15 @@ if(m.attachment&&m.attachment.data){
   }
   function openAttachments(){
     if(!room){toast("Open a private chat first.");return}
-    attachmentMode="images";$("attachmentsImagesTab").classList.add("active");$("attachmentsVoiceTab").classList.remove("active");
+    attachmentMode="images";$("attachmentsImagesTab").classList.add("active");$("attachmentsVideosTab").classList.remove("active");$("attachmentsVoiceTab").classList.remove("active");
     $("attachmentsStatus").textContent="Loading attachments…";$("attachmentsList").textContent="";$("attachmentsModal").hidden=false;loadAttachmentsForCurrentRoom();
   }
   $("attachmentsBtn").addEventListener("click",openAttachments);
   $("attachmentsClose").addEventListener("click",closeAttachments);
   $("attachmentsModal").addEventListener("click",function(e){if(e.target===$("attachmentsModal"))closeAttachments()});
-  $("attachmentsImagesTab").addEventListener("click",function(){attachmentMode="images";this.classList.add("active");$("attachmentsVoiceTab").classList.remove("active");loadAttachmentsForCurrentRoom()});
-  $("attachmentsVoiceTab").addEventListener("click",function(){attachmentMode="voice";this.classList.add("active");$("attachmentsImagesTab").classList.remove("active");loadAttachmentsForCurrentRoom()});
+  $("attachmentsImagesTab").addEventListener("click",function(){attachmentMode="images";this.classList.add("active");$("attachmentsVideosTab").classList.remove("active");$("attachmentsVoiceTab").classList.remove("active");loadAttachmentsForCurrentRoom()});
+  $("attachmentsVideosTab").addEventListener("click",function(){attachmentMode="videos";this.classList.add("active");$("attachmentsImagesTab").classList.remove("active");$("attachmentsVoiceTab").classList.remove("active");loadAttachmentsForCurrentRoom()});
+  $("attachmentsVoiceTab").addEventListener("click",function(){attachmentMode="voice";this.classList.add("active");$("attachmentsImagesTab").classList.remove("active");$("attachmentsVideosTab").classList.remove("active");loadAttachmentsForCurrentRoom()});
 
   $("muteBtn").addEventListener("click",function(){if(!room)return;if(mutedChats[room])delete mutedChats[room];else mutedChats[room]=true;saveUserMap("chatboxMuted",mutedChats);paintTitle();toast(mutedChats[room]?"Notifications muted for this chat.":"Notifications enabled for this chat.")});
   $("jumpLatest").addEventListener("click",function(){var th=$("thread");th.scrollTop=th.scrollHeight;$("jumpLatest").hidden=true});
