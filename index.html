@@ -1135,7 +1135,7 @@ body.theme-light .mark{background:linear-gradient(145deg,rgba(180,180,180,.45),r
     if(PICKER_EMOJIS.indexOf(emoji)===-1)return;
     // One deterministic document per user + emoji lets each participant add
     // several different reactions to the same message without overwriting them.
-    var ref=reactionCollection(messageId).doc(uid+"_"+encodeURIComponent(emoji));
+    var ref=reactionCollection(messageId).doc(uid+"_"+emoji);
     ref.get().then(function(s){
       if(s.exists)return ref.delete();
       return ref.set({uid:uid,emoji:emoji,t:Date.now()});
