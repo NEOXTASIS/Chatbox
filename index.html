@@ -1261,7 +1261,7 @@ var messageText=String(m.text||"");
       });
       var menuCloseTimer=null;
       function closeMessageMenu(target){
-        target.classList.remove("show-reactions");quick.classList.remove("is-open");
+        target.classList.remove("show-reactions","text-options-open");quick.classList.remove("is-open");
         if(menuCloseTimer!==null){clearTimeout(menuCloseTimer);menuCloseTimer=null;}
       }
       // Pause auto-close while the pointer/finger is interacting with the menu.
@@ -1332,7 +1332,7 @@ if(m.attachment&&m.attachment.data){
       }
       var hoverTimer=null;
       row.addEventListener("mouseenter",function(){clearTimeout(hoverTimer);hoverTimer=setTimeout(function(){row.classList.add("menu-ready")},1000)});
-      row.addEventListener("mouseleave",function(){clearTimeout(hoverTimer);row.classList.remove("menu-ready");if(!row.classList.contains("show-reactions"))closeMessageMenu(row)});
+      row.addEventListener("mouseleave",function(){clearTimeout(hoverTimer);row.classList.remove("menu-ready");if(row.classList.contains("show-reactions")&&!menuPointerInside){if(menuCloseTimer!==null)clearTimeout(menuCloseTimer);menuCloseTimer=setTimeout(function(){if(!menuPointerInside)closeMessageMenu(row)},1500);}});
       window.addEventListener("resize",function(){if(row.classList.contains("show-reactions")){positionDots();positionQuickbar()}else if(hasImage)positionDots()});
       th.addEventListener("scroll",function(){if(row.classList.contains("show-reactions")){positionDots();positionQuickbar()}else if(hasImage)positionDots()},{passive:true});
       var touchStartX=0,touchStartY=0,touchMoved=false,suppressNextClick=false,longPressTimer=null,longPressTriggered=false;
