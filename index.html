@@ -93,7 +93,7 @@ button:focus-visible{outline:2px solid #fff;outline-offset:2px}
 .me:hover{background:var(--hover);transform:translateY(-2px);box-shadow:0 8px 22px rgba(0,0,0,.5)}
 .me span{font-weight:600;max-width:120px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .alerts-btn{flex:none;padding:9px 12px;border-radius:999px;background:var(--hover);font-size:12px;font-weight:700;white-space:nowrap}
-.head-tool{flex:none;padding:9px 11px;border-radius:999px;background:var(--hover);font-size:12px;font-weight:700;white-space:nowrap}.head-tool[aria-pressed="true"]{background:rgba(255,255,255,.18)}.search-status{align-self:center;color:var(--muted);font-size:12px;padding:4px 10px}.jump-latest{position:absolute;right:22px;bottom:86px;z-index:6;border:1px solid rgba(255,255,255,.12);border-radius:999px;padding:9px 13px;background:#f4f4f2;color:#0a0a0a;font-weight:700;box-shadow:0 8px 24px rgba(0,0,0,.35)}
+.head-tool{flex:none;padding:9px 11px;border-radius:999px;background:var(--hover);font-size:12px;font-weight:700;white-space:nowrap}.head-tool[aria-pressed="true"]{background:rgba(255,255,255,.18)}.search-status{align-self:center;color:var(--muted);font-size:12px;padding:4px 10px}.jump-latest{position:absolute;left:50%;right:auto;bottom:86px;transform:translateX(-50%);z-index:6;width:38px;height:38px;display:grid;place-items:center;padding:0;border:2px solid rgba(255,255,255,.22);border-radius:50%;background:rgba(18,18,18,.94);color:#fff;font-size:25px;font-weight:900;line-height:1;box-shadow:0 3px 12px rgba(0,0,0,.48)}.jump-latest:active{transform:translateX(-50%) scale(.94)}.jump-latest[hidden]{display:none!important}
 body.theme-light{--bg:#f0f0f0;--win:#fff;--ink:#171717;--muted:#666;--dim:#858585;--hover:rgba(0,0,0,.07);background:var(--bg);color:var(--ink)}body.theme-light .win{background:rgba(255,255,255,.96)}body.theme-light .side{background:rgba(0,0,0,.025);border-color:rgba(0,0,0,.08)} .message-link{color:#9bc7ff;text-decoration:underline;text-underline-offset:2px;overflow-wrap:anywhere;cursor:pointer}.message-link:active{opacity:.75}
 .bub.hyperlink-bubble{background:#333!important;color:#f4f4f4!important}.bub.hyperlink-bubble .message-link{color:#9bc7ff!important}
 .bub{background:#e8e8e8;color:#171717}body.theme-light .row.mine .bub{background:#222;color:#fff}body.theme-light .side-search{border-color:rgba(0,0,0,.1)}body.theme-light .reaction-quickbar{background:#fff;border-color:rgba(0,0,0,.15)}body.theme-light .menu-action{background:rgba(0,0,0,.07);color:#171717}body.theme-light .head-tool,body.theme-light .alerts-btn{color:#171717}
@@ -425,7 +425,7 @@ body.theme-light .bg{background:#FFFFFF!important}
 body.theme-light .bg:after{background:radial-gradient(ellipse 36% 30% at 18% 24%,rgba(128,128,128,.16),transparent 72%),radial-gradient(ellipse 30% 35% at 82% 34%,rgba(0,0,0,.06),transparent 72%),radial-gradient(ellipse 34% 25% at 62% 86%,rgba(128,128,128,.10),transparent 72%)!important}
 svg stop{stop-color:#808080!important}
 .home .mark,.pending .mark,.brand .mark{background:#FFFFFF!important;color:#000000!important;box-shadow:none!important}
-.btn.primary,.send,.toast,.jump-latest{background:#FFFFFF!important;color:#000000!important;box-shadow:none!important}
+.btn.primary,.send,.toast{background:#FFFFFF!important;color:#000000!important;box-shadow:none!important}.jump-latest{background:rgba(18,18,18,.94)!important;color:#FFFFFF!important;box-shadow:0 3px 12px rgba(0,0,0,.48)!important}
 body.theme-light .btn.primary,body.theme-light .send,body.theme-light .toast,body.theme-light .jump-latest{background:#000000!important;color:#FFFFFF!important}
 .linkbtn{color:#FFFFFF!important}body.theme-light .linkbtn{color:#000000!important}
 .conv.on{background:rgba(128,128,128,.24)!important;box-shadow:inset 2px 0 #FFFFFF!important}
@@ -900,7 +900,7 @@ body.theme-light .mark{background:linear-gradient(145deg,rgba(180,180,180,.45),r
     </header>
     <div id="conversationLabel" class="conversation-label" aria-live="polite">Choose a person to start a private chat</div>
     <div id="thread" class="thread" aria-live="polite"></div>
-    <button id="jumpLatest" class="jump-latest" type="button" hidden>↓ Latest messages</button>
+    <button id="jumpLatest" class="jump-latest" type="button" aria-label="Jump to latest message" title="Jump to latest message" hidden>↓</button>
     <div id="replyPreview" class="reply-preview" hidden aria-live="polite">
       <div class="reply-preview-copy"><span id="replyPreviewName" class="reply-preview-name"></span><span id="replyPreviewText" class="reply-preview-text"></span></div>
       <button id="replyPreviewCancel" class="reply-preview-cancel" type="button" aria-label="Cancel reply">×</button>
