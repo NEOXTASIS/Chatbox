@@ -1514,7 +1514,10 @@ if(m.attachment&&m.attachment.data){
     if(name.length<2||name.length>20){err.textContent="Username must be 2 to 20 characters.";return}
     var taken=Object.keys(profiles).some(function(k){return k!==uid&&(profiles[k].name||"").toLowerCase()===name.toLowerCase()});
     if(taken){err.textContent="That username is already taken.";return}
-    db.collection("profiles").doc(uid).set({name:name,avatar:newAvatar||"",t:Date.now()}).then(function(){
+    /* If Save is pressed while the crop editor is open, commit the crop first. */
+    if(cropState)closeCrop(true);
+    var avatarToSave=newAvatar||"";
+    db.collection("profiles").doc(uid).set({name:name,avatar:avatarToSave,t:Date.now()}).then(function(){
       $("modal").hidden=true;
     }).catch(function(){err.textContent="Couldn’t save your profile."});
   }
@@ -1660,12 +1663,20 @@ if(m.attachment&&m.attachment.data){
   function closeCrop(apply){
     if(!cropState)return;var c=cropState;
     if(apply){
-      var scale=c.img.width*c.base*c.zoom,sourceSize=c.size/scale;
-      var sx=-c.x/scale*c.img.width,sy=-c.y/scale*c.img.height;
-      var sw=c.size/scale*c.img.width,sh=c.size/scale*c.img.height;
+      /* Convert the exact square visible through the crop window into the
+         saved avatar. Keep the crop result in newAvatar until profile save. */
+      var displayScale=c.base*c.zoom;
+      var sx=Math.max(0,(-c.x)/displayScale);
+      var sy=Math.max(0,(-c.y)/displayScale);
+      var sw=Math.min(c.size/displayScale,c.img.naturalWidth-sx);
+      var sh=Math.min(c.size/displayScale,c.img.naturalHeight-sy);
+      var side=Math.min(sw,sh);
       var canvas=document.createElement("canvas");canvas.width=320;canvas.height=320;
-      canvas.getContext("2d").drawImage(c.img,sx,sy,sw,sh,0,0,320,320);
-      newAvatar=canvas.toDataURL("image/jpeg",.82);paintPick();
+      var ctx=canvas.getContext("2d");
+      ctx.imageSmoothingEnabled=true;ctx.imageSmoothingQuality="high";
+      ctx.drawImage(c.img,sx,sy,side,side,0,0,320,320);
+      var cropped=canvas.toDataURL("image/jpeg",.88);
+      if(cropped&&cropped.indexOf("data:image/jpeg,")===0){newAvatar=cropped;paintPick()}
     }
     $("cropPanel").hidden=true;$("cropPhoto").disabled=true;cropState=null;
   }
