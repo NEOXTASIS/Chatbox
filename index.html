@@ -1254,8 +1254,16 @@ var messageText=String(m.text||"");
         quick.style.left=Math.round(left)+"px";quick.style.top=Math.round(top)+"px";
       }
       function positionDots(){
+        // Desktop uses the button's absolute position inside the message column.
+        // Only touch layouts need fixed positioning beside the message itself.
+        var touchLayout=window.matchMedia("(max-width:760px), (pointer:coarse)").matches;
+        if(!touchLayout){
+          dots.style.position="";dots.style.top="";dots.style.left="";dots.style.right="";
+          return;
+        }
         var rect=messageAnchor().getBoundingClientRect();
-        dots.style.position="fixed";dots.style.top=Math.round(Math.max(8,Math.min(window.innerHeight-38,rect.top+rect.height/2-15)))+"px";
+        dots.style.position="fixed";
+        dots.style.top=Math.round(Math.max(8,Math.min(window.innerHeight-38,rect.top+rect.height/2-15)))+"px";
         dots.style.left=isMe?"auto":Math.round(Math.min(window.innerWidth-38,rect.right+5))+"px";
         dots.style.right=isMe?Math.round(Math.max(5,window.innerWidth-rect.left+5))+"px":"auto";
       }
@@ -1267,6 +1275,14 @@ var messageText=String(m.text||"");
       function closeMessageMenu(target){
         target.classList.remove("show-reactions","text-options-open");quick.classList.remove("is-open");
         if(menuCloseTimer!==null){clearTimeout(menuCloseTimer);menuCloseTimer=null;}
+        // Restore desktop hover positioning immediately; mobile image controls remain anchored.
+        if(!window.matchMedia("(max-width:760px), (pointer:coarse)").matches){
+          dots.style.position="";dots.style.top="";dots.style.left="";dots.style.right="";
+        }else if(!hasImage){
+          dots.style.position="";dots.style.top="";dots.style.left="";dots.style.right="";
+        }else{
+          requestAnimationFrame(positionDots);
+        }
       }
       // Pause auto-close while the pointer/finger is interacting with the menu.
       // The quickbar is fixed-positioned, so the row may receive mouseleave while
