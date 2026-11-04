@@ -1,0 +1,12 @@
+name = "chatbox-media"
+main = "src/index.js"
+compatibility_date = "2026-11-04"
+
+[[r2_buckets]]
+binding = "MEDIA_BUCKET"
+bucket_name = "chatbox-media"
+
+[vars]
+FIREBASE_PROJECT_ID = "chatbox-5ae88"
+FIREBASE_OWNER_EMAIL = "neoxtasis666@gmail.com"
+ALLOWED_ORIGIN = "https://neoxtasis.github.io"
