@@ -133,7 +133,7 @@ body.theme-light{--bg:#f0f0f0;--win:#fff;--ink:#171717;--muted:#666;--dim:#85858
 .reply-desktop-action:hover,.reply-desktop-action:focus-visible{opacity:1!important;background:var(--hover);outline:none}
 .row.menu-ready .dots-action,.row.show-reactions .dots-action,.row:focus-within .dots-action{opacity:.82;visibility:visible}
 /* Mobile: keep the message ellipsis visible without hover; desktop keeps its existing delayed behavior. */
-@media (max-width:760px), (pointer:coarse){.row:not(.has-image) .dots-action{opacity:0!important;visibility:hidden!important;pointer-events:none!important;display:none!important}.row.has-image .col{position:relative;overflow:visible}.row.has-image .dots-action{display:grid!important;position:absolute;z-index:30;opacity:1!important;visibility:visible!important;pointer-events:auto!important;right:2px;left:auto;top:-10px;transform:none;width:30px;height:30px;border:1px solid rgba(255,255,255,.16);border-radius:10px;background:rgba(32,32,32,.96);color:#fff;font-size:19px;box-shadow:0 2px 8px rgba(0,0,0,.35)}.row.has-image.mine .dots-action{left:2px;right:auto}.row.has-image .dots-action:active{opacity:1;background:#444}}
+@media (max-width:760px), (pointer:coarse){.row:not(.has-image):not(.show-reactions) .dots-action{opacity:0!important;visibility:hidden!important;pointer-events:none!important;display:none!important}.row:not(.has-image).show-reactions .dots-action{display:grid!important;position:absolute;z-index:30;opacity:1!important;visibility:visible!important;pointer-events:auto!important;right:2px;left:auto;top:-10px;transform:none;width:30px;height:30px;border:1px solid rgba(255,255,255,.16);border-radius:10px;background:rgba(32,32,32,.96);color:#fff;font-size:19px;box-shadow:0 2px 8px rgba(0,0,0,.35)}.row.has-image .col{position:relative;overflow:visible}.row.has-image .dots-action{display:grid!important;position:absolute;z-index:30;opacity:1!important;visibility:visible!important;pointer-events:auto!important;right:2px;left:auto;top:-10px;transform:none;width:30px;height:30px;border:1px solid rgba(255,255,255,.16);border-radius:10px;background:rgba(32,32,32,.96);color:#fff;font-size:19px;box-shadow:0 2px 8px rgba(0,0,0,.35)}.row.has-image.mine .dots-action,.row:not(.has-image).mine.show-reactions .dots-action{left:2px;right:auto}.row.has-image .dots-action:active,.row.show-reactions .dots-action:active{opacity:1;background:#444}}
 .dots-action:hover,.dots-action:focus-visible{opacity:1!important;background:var(--hover);outline:none}
 .reaction-quickbar{position:fixed;z-index:2147483000;top:0;left:0;display:flex;flex-wrap:wrap;align-items:center;gap:3px;padding:5px;background:#202020;border:1px solid rgba(255,255,255,.18);border-radius:14px;box-shadow:0 8px 24px rgba(0,0,0,.72);opacity:0;visibility:hidden;pointer-events:none;transition:opacity .45s ease,visibility 0s linear .45s;max-width:calc(100vw - 16px);box-sizing:border-box}
 .row.show-reactions{position:relative;z-index:100}
@@ -1327,25 +1327,29 @@ if(m.attachment&&m.attachment.data){
       row.addEventListener("mouseenter",function(){clearTimeout(hoverTimer);hoverTimer=setTimeout(function(){row.classList.add("menu-ready")},1000)});
       row.addEventListener("mouseleave",function(){clearTimeout(hoverTimer);row.classList.remove("menu-ready");if(!row.classList.contains("show-reactions"))closeMessageMenu(row)});
       window.addEventListener("resize",function(){if(row.classList.contains("show-reactions"))positionQuickbar()});
-      var touchStartX=0,touchStartY=0,touchMoved=false,suppressNextClick=false;
+      var touchStartX=0,touchStartY=0,touchMoved=false,suppressNextClick=false,longPressTimer=null,longPressTriggered=false;
       b.addEventListener("touchstart",function(ev){
         if(!coarse||!ev.changedTouches||!ev.changedTouches.length)return;
-        touchStartX=ev.changedTouches[0].clientX;touchStartY=ev.changedTouches[0].clientY;touchMoved=false;
+        touchStartX=ev.changedTouches[0].clientX;touchStartY=ev.changedTouches[0].clientY;touchMoved=false;longPressTriggered=false;
+        if(!row.classList.contains("has-image")){clearTimeout(longPressTimer);longPressTimer=setTimeout(function(){longPressTriggered=true;row.classList.add("text-options-open");dots.click();},450);}
       },{passive:true});
       b.addEventListener("touchmove",function(ev){
         if(!coarse||!ev.changedTouches||!ev.changedTouches.length)return;
         var dx=ev.changedTouches[0].clientX-touchStartX,dy=ev.changedTouches[0].clientY-touchStartY;
-        if(Math.abs(dx)>12||Math.abs(dy)>12)touchMoved=true;
+        if(Math.abs(dx)>12||Math.abs(dy)>12){touchMoved=true;clearTimeout(longPressTimer);}
       },{passive:true});
       b.addEventListener("touchend",function(ev){
         if(!coarse||!ev.changedTouches||!ev.changedTouches.length)return;
+        clearTimeout(longPressTimer);
         var dx=ev.changedTouches[0].clientX-touchStartX,dy=ev.changedTouches[0].clientY-touchStartY;
-        if(!isMe&&dx>55&&Math.abs(dx)>Math.abs(dy)*1.25){suppressNextClick=true;quoteMessage();row.classList.remove("mobile-options","menu-ready","show-reactions");return;}
+        if(!isMe&&dx>55&&Math.abs(dx)>Math.abs(dy)*1.25){suppressNextClick=true;quoteMessage();row.classList.remove("mobile-options","menu-ready","show-reactions","text-options-open");return;}
+        if(longPressTriggered){suppressNextClick=true;setTimeout(function(){suppressNextClick=false},500);}
       },{passive:true});
+      b.addEventListener("touchcancel",function(){clearTimeout(longPressTimer);},{passive:true});
       b.addEventListener("click",function(ev){
         if(!coarse)return;
         if(suppressNextClick){suppressNextClick=false;ev.preventDefault();ev.stopPropagation();return;}
-        if(!row.classList.contains("has-image")){dots.click();}
+        if(!row.classList.contains("has-image")&&!longPressTriggered){dots.click();}
       });
       b.addEventListener("contextmenu",function(ev){if(coarse)ev.preventDefault()});
       if(isMe){
