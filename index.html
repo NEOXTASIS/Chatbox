@@ -643,6 +643,18 @@ button:active{transform:scale(.96)}
 @media(max-width:480px){.composer{padding-left:10px!important;padding-right:10px!important}.composer-shell{gap:6px;padding:6px 7px 6px 8px;min-height:52px}.composer-tools{flex-basis:36px!important;width:36px!important;min-width:36px!important}.composer-plus,.composer-shell>.send{width:36px!important;height:36px!important;flex-basis:36px!important}#msg{min-height:36px!important;height:36px!important}}
 @media(prefers-reduced-motion:reduce){.composer-shell,.composer-shell>.send,.composer-options .emoji-toggle{animation:none!important}}
 
+/* Attachment staging tray inside the message composer */
+.composer-shell{flex-wrap:wrap!important}
+.composer-preview{order:0;flex:0 0 100%;width:100%;min-width:0;display:flex;align-items:center;gap:9px;overflow-x:auto;padding:3px 2px 8px;box-sizing:border-box}
+.composer-preview[hidden]{display:none!important}
+.composer-preview-item{position:relative;flex:0 0 76px;width:76px;height:76px;border:1px solid rgba(255,255,255,.16);border-radius:13px;overflow:hidden;background:#29292d}
+.composer-preview-item img,.composer-preview-item video{width:100%;height:100%;object-fit:cover;display:block}
+.composer-preview-file{height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;padding:5px;box-sizing:border-box;color:#eee;text-align:center;font-size:10px;overflow:hidden}
+.composer-preview-file svg{width:25px;height:25px;stroke:currentColor;fill:none}
+.composer-preview-file span{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.composer-preview-remove{position:absolute;right:4px;top:4px;width:22px;height:22px;border:1px solid rgba(255,255,255,.28);border-radius:50%;background:rgba(0,0,0,.78);color:white;font-size:17px;line-height:18px;padding:0;display:grid;place-items:center;z-index:2}
+.composer-preview-count{font-size:11px;color:rgba(255,255,255,.65);white-space:nowrap;padding-right:5px}
+@media(max-width:480px){.composer-preview-item{flex-basis:68px;width:68px;height:68px}}
 /* Consistent thin-line SVG icon system */
 .composer-plus svg,.composer-options .emoji-toggle svg,.composer-shell>.send svg{width:23px;height:23px;display:block;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 .composer-plus svg{width:24px;height:24px;transition:transform .28s cubic-bezier(.2,1.4,.4,1)}
@@ -867,6 +879,7 @@ body.theme-light .mark{background:linear-gradient(145deg,rgba(180,180,180,.45),r
     <div class="composer">
       <div id="emojiPicker" class="emoji-picker" hidden aria-label="Choose an emoji"></div>
       <div class="composer-shell">
+        <div id="composerPreview" class="composer-preview" hidden aria-live="polite"></div>
         <div class="composer-tools">
           <button id="composerPlus" class="emoji-toggle composer-plus" type="button" aria-label="More message options" aria-expanded="false" title="More options"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button>
           <div id="composerOptions" class="composer-options" hidden aria-label="Message options">
@@ -1460,13 +1473,34 @@ if(m.attachment&&m.attachment.data){
       var reader=new FileReader();reader.onload=function(){resolve({name:file.name,type:type,data:String(reader.result)})};reader.onerror=reject;reader.readAsDataURL(file);
     });
   }
+  var pendingAttachments=[];
+  function renderComposerPreview(){
+    var root=$("composerPreview");root.textContent="";
+    root.hidden=!pendingAttachments.length;
+    if(!pendingAttachments.length)return;
+    pendingAttachments.forEach(function(a,index){
+      var item=document.createElement("div");item.className="composer-preview-item";
+      if(/^image\//.test(a.type||"")&&a.data){var im=document.createElement("img");im.src=a.data;im.alt=a.name||"Image preview";item.appendChild(im)}
+      else if(/^video\//.test(a.type||"")&&a.data){var vd=document.createElement("video");vd.src=a.data;vd.muted=true;vd.playsInline=true;item.appendChild(vd)}
+      else{var file=document.createElement("div");file.className="composer-preview-file";file.innerHTML='<svg viewBox="0 0 24 24"><path d="M6 2h8l5 5v15H6zM14 2v6h5"/></svg>';var label=document.createElement("span");label.textContent=a.name||"Attachment";file.appendChild(label);item.appendChild(file)}
+      var remove=document.createElement("button");remove.type="button";remove.className="composer-preview-remove";remove.textContent="×";remove.setAttribute("aria-label","Remove "+(a.name||"attachment"));remove.onclick=function(){pendingAttachments.splice(index,1);renderComposerPreview()};item.appendChild(remove);root.appendChild(item);
+    });
+    var count=document.createElement("span");count.className="composer-preview-count";count.textContent=pendingAttachments.length+" ready";root.appendChild(count);
+  }
+  function stageAttachment(a){pendingAttachments.push(a);renderComposerPreview()}
+  function sendComposer(){
+    if(!pendingAttachments.length)return send();
+    var queue=pendingAttachments.slice(),ta=$("msg"),textValue=ta.value,chain=Promise.resolve(),sent=0;
+    pendingAttachments=[];renderComposerPreview();
+    queue.forEach(function(a){chain=chain.then(function(){return send(a).then(function(ok){if(ok)sent++;else throw new Error("A selected item could not be sent.")})})});
+    return chain.then(function(){if(sent===queue.length)toast("Sent "+sent+" attachment"+(sent===1?"":"s")+".");return true}).catch(function(){pendingAttachments=queue.slice(sent);renderComposerPreview();if(textValue&&!ta.value){ta.value=textValue;fit()}toast("Some attachments could not be sent. You can retry or remove them.");return false});
+  }
   $("attachBtn").addEventListener("click",function(){if(!room){toast("Open a private chat first.");return}$("attachInput").click()});
   $("attachInput").addEventListener("change",function(){
     var files=Array.prototype.slice.call(this.files||[]);this.value="";if(!files.length)return;
     if(!room){toast("Open a private chat first.");return}
-    var chain=Promise.resolve(),sent=0;
-    files.forEach(function(file){chain=chain.then(function(){return fileToAttachment(file).then(function(a){return send(a).then(function(ok){if(ok)sent++})}).catch(function(e){toast(file.name+": "+(e.message||"Couldn’t prepare this file."))})})});
-    chain.then(function(){if(files.length>1&&sent)toast("Sent "+sent+" of "+files.length+" selected items.")});
+    var chain=Promise.resolve();
+    files.forEach(function(file){chain=chain.then(function(){return fileToAttachment(file).then(function(a){stageAttachment(a)}).catch(function(e){toast(file.name+": "+(e.message||"Couldn’t prepare this file."))})})});
   });
   var voiceRecorder=null,voiceStream=null,voiceChunks=[],voiceBlob=null,voiceMime="";
   function stopVoiceStream(){if(voiceStream){voiceStream.getTracks().forEach(function(t){t.stop()});voiceStream=null}}
@@ -1522,7 +1556,7 @@ if(m.attachment&&m.attachment.data){
   $("cameraCancel").addEventListener("click",stopCamera);$("cameraClose").addEventListener("click",stopCamera);$("cameraModal").addEventListener("click",function(ev){if(ev.target===$("cameraModal"))stopCamera()});
   $("cameraCapture").addEventListener("click",function(){
     var v=$("cameraVideo");if(!cameraStream||!v.videoWidth){$("cameraError").textContent="Camera is not ready yet.";return}
-    var c=document.createElement("canvas"),scale=Math.min(1,720/v.videoWidth);c.width=Math.round(v.videoWidth*scale);c.height=Math.round(v.videoHeight*scale);c.getContext("2d").drawImage(v,0,0,c.width,c.height);var data=c.toDataURL("image/jpeg",0.56);if(data.length>360000){$("cameraError").textContent="Photo is too large to send. Try again.";return}stopCamera();send({name:"camera-"+Date.now()+".jpg",type:"image/jpeg",data:data});
+    var c=document.createElement("canvas"),scale=Math.min(1,720/v.videoWidth);c.width=Math.round(v.videoWidth*scale);c.height=Math.round(v.videoHeight*scale);c.getContext("2d").drawImage(v,0,0,c.width,c.height);var data=c.toDataURL("image/jpeg",0.56);if(data.length>360000){$("cameraError").textContent="Photo is too large to send. Try again.";return}stopCamera();stageAttachment({name:"camera-"+Date.now()+".jpg",type:"image/jpeg",data:data});
   });
   $("nicknameBtn").addEventListener("click",function(){
     if(!room)return;var current=nickMap(),existing=current[room]||"",value=window.prompt("Nickname for "+nameOf(profiles[room])+":",existing);
@@ -1692,8 +1726,8 @@ if(m.attachment&&m.attachment.data){
   pinnedChats=loadUserMap("chatboxPinned");mutedChats=loadUserMap("chatboxMuted");applyTheme();
   updateAlertsButton();
   $("msg").oninput=fit;
-  $("msg").onkeydown=function(e){if(e.key==="Enter"&&!e.shiftKey&&!coarse){e.preventDefault();send()}};
-  $("send").onclick=function(){send();if(!coarse)$("msg").focus()};
+  $("msg").onkeydown=function(e){if(e.key==="Enter"&&!e.shiftKey&&!coarse){e.preventDefault();sendComposer()}};
+  $("send").onclick=function(){sendComposer();if(!coarse)$("msg").focus()};
   $("menu").onclick=openSide;
   $("scrim").onclick=closeSide;
   $("me").onclick=function(){openProfile(false)};
