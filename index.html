@@ -200,6 +200,11 @@ body.theme-light{--bg:#f0f0f0;--win:#fff;--ink:#171717;--muted:#666;--dim:#85858
 .pick img,.av img{position:absolute;inset:0;width:100%;height:100%;max-width:none;max-height:none;object-fit:cover;object-position:center center;display:block;border-radius:inherit}
 .pick small{display:none!important}.profile-photo-wrap{display:flex;flex-direction:column;align-items:center;width:100%}.profile-photo-wrap #pick small{display:none!important}
 .btns{display:flex;gap:10px;width:100%}
+.profile-preferences{width:100%;display:grid;gap:8px;padding-top:14px;border-top:1px solid rgba(255,255,255,.1);text-align:left}
+.profile-preferences h3{margin:0 0 2px;color:var(--muted);font-size:11px;font-weight:700;letter-spacing:.09em;text-transform:uppercase}
+.preference-btn{width:100%;padding:11px 13px;border-radius:11px;text-align:left;background:rgba(255,255,255,.07);font-size:13px}
+body.theme-light .profile-preferences{border-color:rgba(0,0,0,.12)}
+body.theme-light .preference-btn{color:#171717;background:rgba(0,0,0,.06)}
 .out{color:var(--muted);font-size:13px;padding:4px 8px}
 .mlist{width:100%;display:grid;gap:6px}
 .mrow{display:flex;align-items:center;justify-content:space-between;gap:8px;background:var(--hover);border-radius:12px;padding:8px 12px}
@@ -832,8 +837,6 @@ body.theme-light .mark{background:linear-gradient(145deg,rgba(180,180,180,.45),r
           <button id="attachmentsBtn" class="head-tool" type="button" title="Browse images and voice messages" aria-label="Attachments">Attachments</button>
           <button id="muteBtn" class="head-tool" type="button" title="Toggle notifications for this chat" aria-pressed="false" hidden>Chat alerts on</button>
           <button id="nicknameBtn" class="head-tool" type="button" title="Set a nickname for this contact" hidden>Nickname</button>
-          <button id="themeBtn" class="head-tool" type="button" title="Toggle light and dark theme" aria-pressed="false">Light theme</button>
-          <button id="alertsBtn" class="head-tool" type="button" title="Enable message sounds and browser notifications">Enable alerts</button>
         </div>
       </div>
       <button id="me" class="me" hidden aria-label="Edit your profile"></button>
@@ -879,6 +882,11 @@ body.theme-light .mark{background:linear-gradient(145deg,rgba(180,180,180,.45),r
     <div id="cropPanel" class="crop-panel" hidden><p class="note">Adjust the crop by dragging the image, then save your square crop.</p><div class="crop-viewport" id="cropViewport"><img id="cropImage" alt="Adjustable crop preview"></div><div class="crop-zoom"><label for="cropZoom">Zoom</label><input id="cropZoom" type="range" min="1" max="3" step="0.05" value="1"></div><div class="btns"><button id="cancelCrop" class="btn" type="button">Cancel crop</button><button id="applyCrop" class="btn primary" type="button">Use crop</button></div></div>
     <input id="pname" class="field" maxlength="20" placeholder="Choose a username" aria-label="Username" autocomplete="off">
     <div id="perr" class="err"></div>
+    <section class="profile-preferences" aria-label="Preferences">
+      <h3>Preferences</h3>
+      <button id="themeBtn" class="head-tool preference-btn" type="button" title="Toggle light and dark theme" aria-pressed="false">Light theme</button>
+      <button id="alertsBtn" class="head-tool preference-btn" type="button" title="Enable message sounds and browser notifications">Alerts off</button>
+    </section>
     <div class="btns"><button id="pcancel" class="btn">Cancel</button><button id="psave" class="btn primary">Save</button></div>
     <button id="pout" class="out">Sign out</button>
   </div>
