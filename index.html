@@ -1254,13 +1254,8 @@ var messageText=String(m.text||"");
         quick.style.left=Math.round(left)+"px";quick.style.top=Math.round(top)+"px";
       }
       function positionDots(){
-        // Desktop uses the button's absolute position inside the message column.
-        // Only touch layouts need fixed positioning beside the message itself.
-        var touchLayout=window.matchMedia("(max-width:760px), (pointer:coarse)").matches;
-        if(!touchLayout){
-          dots.style.position="";dots.style.top="";dots.style.left="";dots.style.right="";
-          return;
-        }
+        // Anchor to the bubble/media itself, never the full message column:
+        // the reaction capsule below it must not shift the ellipsis vertically.
         var rect=messageAnchor().getBoundingClientRect();
         dots.style.position="fixed";
         dots.style.top=Math.round(Math.max(8,Math.min(window.innerHeight-38,rect.top+rect.height/2-15)))+"px";
@@ -1353,8 +1348,11 @@ if(m.attachment&&m.attachment.data){
       var hoverTimer=null;
       row.addEventListener("mouseenter",function(){clearTimeout(hoverTimer);row.classList.add("menu-ready")});
       row.addEventListener("mouseleave",function(){clearTimeout(hoverTimer);row.classList.remove("menu-ready");if(row.classList.contains("show-reactions")&&!menuPointerInside){if(menuCloseTimer!==null)clearTimeout(menuCloseTimer);menuCloseTimer=setTimeout(function(){if(!menuPointerInside)closeMessageMenu(row)},1500);}});
-      window.addEventListener("resize",function(){if(row.classList.contains("show-reactions")){positionDots();positionQuickbar()}else if(hasImage)positionDots()});
-      th.addEventListener("scroll",function(){if(row.classList.contains("show-reactions")){positionDots();positionQuickbar()}else if(hasImage)positionDots()},{passive:true});
+      // Keep the ellipsis centered beside the actual bubble/media as the thread moves,
+      // including after a reaction capsule is added below the message.
+      requestAnimationFrame(positionDots);
+      window.addEventListener("resize",function(){positionDots();if(row.classList.contains("show-reactions"))positionQuickbar()});
+      th.addEventListener("scroll",function(){positionDots();if(row.classList.contains("show-reactions"))positionQuickbar()},{passive:true});
       var touchStartX=0,touchStartY=0,touchMoved=false,suppressNextClick=false,longPressTimer=null,longPressTriggered=false;
       b.addEventListener("touchstart",function(ev){
         if(!coarse||!ev.changedTouches||!ev.changedTouches.length)return;
