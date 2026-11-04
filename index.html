@@ -1676,7 +1676,7 @@ if(m.attachment&&m.attachment.data){
       ctx.imageSmoothingEnabled=true;ctx.imageSmoothingQuality="high";
       ctx.drawImage(c.img,sx,sy,side,side,0,0,320,320);
       var cropped=canvas.toDataURL("image/jpeg",.88);
-      if(cropped&&cropped.indexOf("data:image/jpeg,")===0){newAvatar=cropped;paintPick()}
+      if(cropped&&cropped.indexOf("data:image/jpeg")===0){newAvatar=cropped;paintPick()}
     }
     $("cropPanel").hidden=true;$("cropPhoto").disabled=true;cropState=null;
   }
