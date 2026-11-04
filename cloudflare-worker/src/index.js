@@ -167,20 +167,66 @@ export default {
         return json({ error: "Invalid media reference." }, 400, allowedOrigin);
       }
 
-      const object = await env.MEDIA_BUCKET.get(key);
-      if (!object) return json({ error: "Media not found." }, 404, allowedOrigin);
+      const head = await env.MEDIA_BUCKET.head(key);
+      if (!head) return json({ error: "Media not found." }, 404, allowedOrigin);
 
-      const metadata = object.customMetadata || {};
+      const metadata = head.customMetadata || {};
       if (metadata.ownerUid !== user.uid && metadata.peerUid !== user.uid) {
         return json({ error: "You are not a participant in this conversation." }, 403, allowedOrigin);
       }
+
+      let object;
+      let status = 200;
+      const rangeHeader = request.headers.get("Range");
+      const rangeMatch = rangeHeader && rangeHeader.match(/^bytes=(\\d*)-(\\d*)$/);
+      if (rangeHeader && !rangeMatch) {
+        return new Response(null, {
+          status: 416,
+          headers: corsHeaders(allowedOrigin, {
+            "Content-Range": "bytes */" + head.size,
+            "Accept-Ranges": "bytes"
+          })
+        });
+      }
+
+      if (rangeMatch) {
+        let start = rangeMatch[1] ? Number(rangeMatch[1]) : null;
+        let end = rangeMatch[2] ? Number(rangeMatch[2]) : null;
+        if (start === null) {
+          const suffixLength = end;
+          if (!suffixLength || suffixLength < 0) {
+            return new Response(null, { status: 416, headers: corsHeaders(allowedOrigin, { "Content-Range": "bytes */" + head.size }) });
+          }
+          start = Math.max(0, head.size - suffixLength);
+          end = head.size - 1;
+        } else {
+          if (end === null || end >= head.size) end = head.size - 1;
+        }
+        if (!Number.isSafeInteger(start) || !Number.isSafeInteger(end) || start < 0 || end < start || start >= head.size) {
+          return new Response(null, { status: 416, headers: corsHeaders(allowedOrigin, { "Content-Range": "bytes */" + head.size }) });
+        }
+        object = await env.MEDIA_BUCKET.get(key, { range: { offset: start, length: end - start + 1 } });
+        status = 206;
+      } else {
+        object = await env.MEDIA_BUCKET.get(key);
+      }
+      if (!object) return json({ error: "Media not found." }, 404, allowedOrigin);
 
       const headers = corsHeaders(allowedOrigin);
       object.writeHttpMetadata(headers);
       headers.set("Cache-Control", "private, no-store");
       headers.set("X-Content-Type-Options", "nosniff");
+      headers.set("Accept-Ranges", "bytes");
       headers.set("Content-Security-Policy", "default-src 'none'; sandbox");
-      return new Response(object.body, { headers });
+      if (status === 206) {
+        const start = rangeMatch[1] ? Number(rangeMatch[1]) : Math.max(0, head.size - Number(rangeMatch[2]));
+        const end = rangeMatch[2] ? Math.min(Number(rangeMatch[2]), head.size - 1) : head.size - 1;
+        headers.set("Content-Range", "bytes " + start + "-" + end + "/" + head.size);
+        headers.set("Content-Length", String(end - start + 1));
+      } else {
+        headers.set("Content-Length", String(head.size));
+      }
+      return new Response(object.body, { status: status, headers });
     }
 
     return json({ error: "Not found." }, 404, allowedOrigin);
