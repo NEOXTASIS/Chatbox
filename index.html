@@ -795,10 +795,10 @@ body.theme-light .mark{background:linear-gradient(145deg,rgba(180,180,180,.45),r
    Desktop layout is intentionally unchanged. */
 @supports (height: 100dvh){
   @media (max-width:760px){
-    html,body{height:100dvh;min-height:100dvh}
-    body{padding:0!important}
-    .win{width:100%;height:100dvh;min-height:0;margin:0;border:0;border-radius:0;max-width:none}
-    .main{min-height:0;height:100%;padding-left:env(safe-area-inset-left,0px);padding-right:env(safe-area-inset-right,0px)}
+    html,body{width:100%;height:100%;min-height:100%;margin:0;overflow:hidden}
+    body{position:fixed;inset:0;width:100%;height:100dvh;min-height:0;padding:0!important;box-sizing:border-box;background:#080808}
+    .win{position:relative;width:100%;height:100%;height:100dvh;min-height:0;flex:1 1 auto;margin:0;border:0;border-radius:0;max-width:none;box-sizing:border-box;background:#080808}
+    .main{min-height:0;height:100%;padding-left:env(safe-area-inset-left,0px);padding-right:env(safe-area-inset-right,0px);background:#080808}
     .head{padding-top:calc(10px + env(safe-area-inset-top,0px));}
     .thread{min-height:0;padding-bottom: max(12px, env(safe-area-inset-bottom,0px))}
     .composer{padding-bottom:calc(12px + env(safe-area-inset-bottom,0px))!important;padding-left:calc(10px + env(safe-area-inset-left,0px))!important;padding-right:calc(10px + env(safe-area-inset-right,0px))!important}
@@ -1196,7 +1196,7 @@ body.theme-light .mark{background:linear-gradient(145deg,rgba(180,180,180,.45),r
       var isMe=m.uid===uid,p=profiles[m.uid],can=isMe;
       var first=!(lastU===m.uid&&m.t-lastT<300000);
       lastU=m.uid;lastT=m.t;
-      var hasImage=!!(m.attachment&&/^image\\//i.test(m.attachment.type||""));
+      var hasImage=!!(m.attachment&&String(m.attachment.type||"").toLowerCase().indexOf("image/")===0);
        var row=el("div","row"+(isMe?" mine":"")+(first?" first":"")+(can?" can":"")+(hasImage?" has-image":""));
       if(!isMe){var w=el("div","avw");if(first)w.appendChild(avatar(p));row.appendChild(w)}
       var col=el("div","col");
@@ -1345,7 +1345,7 @@ if(m.attachment&&m.attachment.data){
       b.addEventListener("click",function(ev){
         if(!coarse)return;
         if(suppressNextClick){suppressNextClick=false;ev.preventDefault();ev.stopPropagation();return;}
-        row.classList.toggle("mobile-options");row.classList.add("menu-ready");
+        if(!row.classList.contains("has-image")){dots.click();}
       });
       b.addEventListener("contextmenu",function(ev){if(coarse)ev.preventDefault()});
       if(isMe){
