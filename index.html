@@ -871,12 +871,12 @@ body.theme-light .mark{background:linear-gradient(145deg,rgba(180,180,180,.45),r
           <button id="composerPlus" class="emoji-toggle composer-plus" type="button" aria-label="More message options" aria-expanded="false" title="More options"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button>
           <div id="composerOptions" class="composer-options" hidden aria-label="Message options">
             <button id="emojiToggle" class="emoji-toggle line-tool emoji-tool" type="button" aria-label="Add emoji" title="Add emoji"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M8.5 14s1.2 2 3.5 2 3.5-2 3.5-2M9 9.5h.01M15 9.5h.01"/></svg></button>
-            <button id="attachBtn" class="emoji-toggle line-tool attach-tool" type="button" aria-label="Attach a file" title="Attach image or file"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m8.5 12.5 6.8-6.8a4 4 0 0 1 5.7 5.7l-9.2 9.2a6 6 0 0 1-8.5-8.5l9.2-9.2"/></svg></button>
+            <button id="attachBtn" class="emoji-toggle line-tool attach-tool" type="button" aria-label="Choose photos and videos" title="Choose photos and videos"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="3"/><circle cx="8.5" cy="9" r="1.5"/><path d="m4 17 5-5 3 3 3-4 5 6M14 8h4"/></svg></button>
             <button id="cameraBtn" class="emoji-toggle line-tool camera-tool" type="button" aria-label="Take a picture" title="Take a picture"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h4l1.5-2h5L16 8h4v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg></button>
             
           </div>
         </div>
-        <input id="attachInput" type="file" accept="image/*,video/*,audio/*,.pdf,.txt,.doc,.docx,.xls,.xlsx,.zip" hidden>
+        <input id="attachInput" type="file" accept="image/*,video/*,audio/*,.pdf,.txt,.doc,.docx,.xls,.xlsx,.zip" multiple hidden>
         <textarea id="msg" rows="1" maxlength="2000" placeholder="Message" aria-label="Write a message"></textarea>
         <button id="voiceBtn" class="voice-send-btn" type="button" aria-label="Record a voice message" title="Record a voice message"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="12" rx="3"/><path d="M5.5 11.5a6.5 6.5 0 0 0 13 0M12 18v3M9 21h6"/></svg></button>
         <button id="send" class="send" aria-label="Send message"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 19V5M6 11l6-6 6 6"/></svg></button>
@@ -1436,12 +1436,37 @@ if(m.attachment&&m.attachment.data){
   function fileToAttachment(file){
     return new Promise(function(resolve,reject){
       if(!file)return reject(new Error("No file selected."));
-      if(file.size>280*1024)return reject(new Error("Please choose a file smaller than 280 KB."));
-      var reader=new FileReader();reader.onload=function(){resolve({name:file.name,type:file.type||"application/octet-stream",data:String(reader.result)})};reader.onerror=reject;reader.readAsDataURL(file);
+      var type=file.type||"application/octet-stream";
+      if(/^image\//.test(type)&&file.size>240*1024){
+        var imageUrl=URL.createObjectURL(file),img=new Image();
+        img.onload=function(){
+          URL.revokeObjectURL(imageUrl);
+          var scale=Math.min(1,1280/Math.max(img.naturalWidth,img.naturalHeight)),canvas=document.createElement("canvas");
+          canvas.width=Math.max(1,Math.round(img.naturalWidth*scale));canvas.height=Math.max(1,Math.round(img.naturalHeight*scale));
+          var ctx=canvas.getContext("2d");ctx.drawImage(img,0,0,canvas.width,canvas.height);
+          var quality=.78,data="";
+          for(var i=0;i<6;i++){data=canvas.toDataURL("image/jpeg",quality);if(data.length<320000)break;quality-=.1}
+          if(data.length>=380000){reject(new Error("This photo is still too large after resizing. Choose a smaller image."));return}
+          resolve({name:(file.name.replace(/\.[^.]+$/,"")||"photo")+".jpg",type:"image/jpeg",data:data});
+        };
+        img.onerror=function(){URL.revokeObjectURL(imageUrl);reject(new Error("This photo could not be opened."))};
+        img.src=imageUrl;return;
+      }
+      if(file.size>280*1024){
+        reject(new Error(/^video\//.test(type)?"This video is larger than the current 280 KB limit. Large-video uploads are not active yet.":"This file is larger than the current 280 KB limit."));
+        return;
+      }
+      var reader=new FileReader();reader.onload=function(){resolve({name:file.name,type:type,data:String(reader.result)})};reader.onerror=reject;reader.readAsDataURL(file);
     });
   }
   $("attachBtn").addEventListener("click",function(){if(!room){toast("Open a private chat first.");return}$("attachInput").click()});
-  $("attachInput").addEventListener("change",function(){var file=this.files&&this.files[0];this.value="";if(!file)return;fileToAttachment(file).then(function(a){send(a)}).catch(function(e){toast(e.message||"Couldn’t read that file.")})});
+  $("attachInput").addEventListener("change",function(){
+    var files=Array.prototype.slice.call(this.files||[]);this.value="";if(!files.length)return;
+    if(!room){toast("Open a private chat first.");return}
+    var chain=Promise.resolve(),sent=0;
+    files.forEach(function(file){chain=chain.then(function(){return fileToAttachment(file).then(function(a){return send(a).then(function(ok){if(ok)sent++})}).catch(function(e){toast(file.name+": "+(e.message||"Couldn’t prepare this file."))})})});
+    chain.then(function(){if(files.length>1&&sent)toast("Sent "+sent+" of "+files.length+" selected items.")});
+  });
   var voiceRecorder=null,voiceStream=null,voiceChunks=[],voiceBlob=null,voiceMime="";
   function stopVoiceStream(){if(voiceStream){voiceStream.getTracks().forEach(function(t){t.stop()});voiceStream=null}}
   function closeVoiceModal(){$("voiceModal").classList.remove("is-recording");if(voiceRecorder&&voiceRecorder.state==="recording"){try{voiceRecorder.stop()}catch(e){}}stopVoiceStream();$("voiceModal").hidden=true}
