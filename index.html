@@ -133,7 +133,7 @@ body.theme-light{--bg:#f0f0f0;--win:#fff;--ink:#171717;--muted:#666;--dim:#85858
 .reply-desktop-action:hover,.reply-desktop-action:focus-visible{opacity:1!important;background:var(--hover);outline:none}
 .row.menu-ready .dots-action,.row.show-reactions .dots-action,.row:focus-within .dots-action{opacity:.82;visibility:visible}
 /* Mobile: keep the message ellipsis visible without hover; desktop keeps its existing delayed behavior. */
-@media (max-width:760px), (pointer:coarse){.row:not(.has-image) .dots-action{opacity:0!important;visibility:hidden!important;pointer-events:none!important}.row.has-image .dots-action{opacity:.92;visibility:visible;pointer-events:auto;right:2px;left:auto;top:-10px;transform:none;width:28px;height:28px;border-radius:9px;background:rgba(32,32,32,.94);color:#f4f4f4;box-shadow:0 2px 8px rgba(0,0,0,.28)}.row.has-image.mine .dots-action{left:2px;right:auto}.row.has-image .dots-action:active{opacity:1;background:#444}}
+@media (max-width:760px), (pointer:coarse){.row:not(.has-image) .dots-action{opacity:0!important;visibility:hidden!important;pointer-events:none!important;display:none!important}.row.has-image .col{position:relative;overflow:visible}.row.has-image .dots-action{display:grid!important;position:absolute;z-index:30;opacity:1!important;visibility:visible!important;pointer-events:auto!important;right:2px;left:auto;top:-10px;transform:none;width:30px;height:30px;border:1px solid rgba(255,255,255,.16);border-radius:10px;background:rgba(32,32,32,.96);color:#fff;font-size:19px;box-shadow:0 2px 8px rgba(0,0,0,.35)}.row.has-image.mine .dots-action{left:2px;right:auto}.row.has-image .dots-action:active{opacity:1;background:#444}}
 .dots-action:hover,.dots-action:focus-visible{opacity:1!important;background:var(--hover);outline:none}
 .reaction-quickbar{position:fixed;z-index:2147483000;top:0;left:0;display:flex;flex-wrap:wrap;align-items:center;gap:3px;padding:5px;background:#202020;border:1px solid rgba(255,255,255,.18);border-radius:14px;box-shadow:0 8px 24px rgba(0,0,0,.72);opacity:0;visibility:hidden;pointer-events:none;transition:opacity .45s ease,visibility 0s linear .45s;max-width:calc(100vw - 16px);box-sizing:border-box}
 .row.show-reactions{position:relative;z-index:100}
@@ -1196,7 +1196,7 @@ body.theme-light .mark{background:linear-gradient(145deg,rgba(180,180,180,.45),r
       var isMe=m.uid===uid,p=profiles[m.uid],can=isMe;
       var first=!(lastU===m.uid&&m.t-lastT<300000);
       lastU=m.uid;lastT=m.t;
-      var hasImage=!!(m.attachment&&String(m.attachment.type||"").toLowerCase().indexOf("image/")===0);
+      var attachmentType=String(m.attachment&&m.attachment.type||"").toLowerCase();var attachmentData=String(m.attachment&&m.attachment.data||"").toLowerCase();var attachmentName=String(m.attachment&&m.attachment.name||"").toLowerCase();var hasImage=!!(m.attachment&&(attachmentType.indexOf("image/")===0||attachmentData.indexOf("data:image/")===0||/\.(?:png|jpe?g|gif|webp|heic|heif|avif|bmp)$/i.test(attachmentName)));
        var row=el("div","row"+(isMe?" mine":"")+(first?" first":"")+(can?" can":"")+(hasImage?" has-image":""));
       if(!isMe){var w=el("div","avw");if(first)w.appendChild(avatar(p));row.appendChild(w)}
       var col=el("div","col");
