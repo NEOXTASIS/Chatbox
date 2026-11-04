@@ -1586,18 +1586,60 @@ if(m.attachment&&m.attachment.data){
     reader.readAsDataURL(voiceBlob);
   });
   $("voiceModal").addEventListener("click",function(ev){if(ev.target===$("voiceModal"))closeVoiceModal()});
-  var cameraStream=null;
-  function stopCamera(){if(cameraStream){cameraStream.getTracks().forEach(function(t){t.stop()});cameraStream=null}$("cameraVideo").srcObject=null;$("cameraModal").hidden=true}
+  var cameraStream=null,cameraFacing="environment",cameraMode="photo",cameraRecorder=null,cameraChunks=[],cameraRecordTimer=null;
+  function stopCameraTracks(){if(cameraStream){cameraStream.getTracks().forEach(function(t){try{t.stop()}catch(e){}});cameraStream=null}$("cameraVideo").srcObject=null}
+  function stopCamera(){if(cameraRecordTimer){clearTimeout(cameraRecordTimer);cameraRecordTimer=null}if(cameraRecorder&&cameraRecorder.state==="recording"){try{cameraRecorder.stop()}catch(e){}}cameraRecorder=null;stopCameraTracks();$("cameraModal").hidden=true;$("cameraCapture").classList.remove("recording");$("cameraCapture").setAttribute("aria-label","Take photo")}
+  function startCamera(){
+    if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){$("cameraError").textContent="Live camera is not available in this browser. Try choosing media from your gallery.";return Promise.reject(new Error("Camera unavailable"))}
+    $("cameraError").textContent="";$("cameraStatus").textContent="Starting camera…";
+    return navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:cameraFacing},width:{ideal:1280},height:{ideal:960}},audio:false}).then(function(stream){
+      cameraStream=stream;var v=$("cameraVideo");v.srcObject=stream;var p=v.play();$("cameraStatus").textContent=cameraMode==="photo"?"Ready to take a picture":"Ready to record a short video";return p&&p.catch?p.catch(function(){}):undefined;
+    }).catch(function(err){$("cameraError").textContent=err&&err.name==="NotAllowedError"?"Camera access was denied. Allow camera access in Safari settings.":"Could not start this camera. Try switching cameras or check browser permissions.";throw err});
+  }
+  function setCameraMode(mode){
+    cameraMode=mode==="video"?"video":"photo";
+    $("cameraPhotoMode").classList.toggle("active",cameraMode==="photo");$("cameraVideoMode").classList.toggle("active",cameraMode==="video");
+    $("cameraPhotoMode").setAttribute("aria-selected",cameraMode==="photo"?"true":"false");$("cameraVideoMode").setAttribute("aria-selected",cameraMode==="video"?"true":"false");
+    $("cameraCapture").classList.remove("recording");$("cameraCapture").setAttribute("aria-label",cameraMode==="photo"?"Take photo":"Start video recording");
+    $("cameraCapture").title=cameraMode==="photo"?"Take photo":"Start video recording";
+    $("cameraStatus").textContent=cameraMode==="photo"?"Ready to take a picture":"Ready to record a short video (up to 4 seconds)";
+  }
   $("cameraBtn").addEventListener("click",function(){
     if(!room){toast("Open a private chat first.");return}
-    if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){toast("Live camera is not available in this browser. Try the 📎 button to choose a photo.");return}
-    $("cameraError").textContent="";$("cameraModal").hidden=false;
-    navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:"environment"},width:{ideal:1280},height:{ideal:720},aspectRatio:{ideal:4/3}},audio:false}).then(function(stream){cameraStream=stream;var v=$("cameraVideo");v.srcObject=stream;var p=v.play();if(p&&p.catch)p.catch(function(){})}).catch(function(){$("cameraError").textContent="Camera access was blocked or unavailable. Check browser permissions."});
+    cameraFacing="environment";setCameraMode("photo");$("cameraModal").hidden=false;startCamera().catch(function(){});
+  });
+  $("cameraPhotoMode").addEventListener("click",function(){if(cameraRecorder&&cameraRecorder.state==="recording")return;setCameraMode("photo")});
+  $("cameraVideoMode").addEventListener("click",function(){if(cameraRecorder&&cameraRecorder.state==="recording")return;setCameraMode("video")});
+  $("cameraFlip").addEventListener("click",function(){
+    if(cameraRecorder&&cameraRecorder.state==="recording")return;
+    cameraFacing=cameraFacing==="environment"?"user":"environment";stopCameraTracks();startCamera().catch(function(){});
   });
   $("cameraCancel").addEventListener("click",stopCamera);$("cameraClose").addEventListener("click",stopCamera);$("cameraModal").addEventListener("click",function(ev){if(ev.target===$("cameraModal"))stopCamera()});
+  function finishCameraVideo(){if(cameraRecordTimer){clearTimeout(cameraRecordTimer);cameraRecordTimer=null}if(cameraRecorder&&cameraRecorder.state==="recording"){try{cameraRecorder.stop()}catch(e){}}}
   $("cameraCapture").addEventListener("click",function(){
     var v=$("cameraVideo");if(!cameraStream||!v.videoWidth){$("cameraError").textContent="Camera is not ready yet.";return}
-    var c=document.createElement("canvas"),scale=Math.min(1,720/v.videoWidth);c.width=Math.round(v.videoWidth*scale);c.height=Math.round(v.videoHeight*scale);c.getContext("2d").drawImage(v,0,0,c.width,c.height);var data=c.toDataURL("image/jpeg",0.56);if(data.length>360000){$("cameraError").textContent="Photo is too large to send. Try again.";return}stopCamera();stageAttachment({name:"camera-"+Date.now()+".jpg",type:"image/jpeg",data:data});
+    if(cameraMode==="photo"){
+      var c=document.createElement("canvas"),scale=Math.min(1,960/Math.max(v.videoWidth,v.videoHeight));c.width=Math.max(1,Math.round(v.videoWidth*scale));c.height=Math.max(1,Math.round(v.videoHeight*scale));c.getContext("2d").drawImage(v,0,0,c.width,c.height);
+      var data=c.toDataURL("image/jpeg",0.62);if(data.length>380000){$("cameraError").textContent="Photo is too large to send. Try again.";return}
+      stopCamera();stageAttachment({name:"camera-"+Date.now()+".jpg",type:"image/jpeg",data:data});return;
+    }
+    if(cameraRecorder&&cameraRecorder.state==="recording"){finishCameraVideo();return}
+    if(!window.MediaRecorder){$("cameraError").textContent="Video recording is not supported by this browser.";return}
+    var candidates=["video/mp4","video/webm;codecs=vp8","video/webm"],mime="";
+    for(var mi=0;mi<candidates.length;mi++){try{if(MediaRecorder.isTypeSupported(candidates[mi])){mime=candidates[mi];break}}catch(e){}}
+    cameraChunks=[];
+    try{cameraRecorder=mime?new MediaRecorder(cameraStream,{mimeType:mime,videoBitsPerSecond:85000}):new MediaRecorder(cameraStream,{videoBitsPerSecond:85000})}catch(e){$("cameraError").textContent="Could not start video recording on this device.";return}
+    cameraRecorder.ondataavailable=function(ev){if(ev.data&&ev.data.size)cameraChunks.push(ev.data)};
+    cameraRecorder.onerror=function(){$("cameraError").textContent="Video recording failed. Please try again."};
+    cameraRecorder.onstop=function(){
+      var type=cameraRecorder&&cameraRecorder.mimeType||mime||"video/mp4",blob=new Blob(cameraChunks,{type:type});cameraRecorder=null;
+      $("cameraCapture").classList.remove("recording");$("cameraCapture").setAttribute("aria-label","Start video recording");
+      stopCameraTracks();$("cameraStatus").textContent="Preparing video…";
+      if(!blob.size){$("cameraError").textContent="No video was recorded. Please try again.";return}
+      if(blob.size>280*1024){$("cameraError").textContent="This clip is "+Math.ceil(blob.size/1024)+" KB. The current app limit is 280 KB; try a shorter clip.";return}
+      var reader=new FileReader();reader.onload=function(){var data=String(reader.result||"");$("cameraModal").hidden=true;stageAttachment({name:"camera-video-"+Date.now()+(type.indexOf("mp4")>=0?".mp4":".webm"),type:type,data:data})};reader.onerror=function(){$("cameraError").textContent="Could not prepare this video"};reader.readAsDataURL(blob);
+    };
+    try{cameraRecorder.start(200);$("cameraCapture").classList.add("recording");$("cameraCapture").setAttribute("aria-label","Stop video recording");$("cameraStatus").textContent="Recording… tap the red button to stop";cameraRecordTimer=setTimeout(finishCameraVideo,4000)}catch(e){cameraRecorder=null;$("cameraError").textContent="Could not start video recording. Please try again"}
   });
   $("nicknameBtn").addEventListener("click",function(){
     if(!room)return;var current=nickMap(),existing=current[room]||"",value=window.prompt("Nickname for "+nameOf(profiles[room])+":",existing);
