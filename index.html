@@ -1586,15 +1586,20 @@ if(m.attachment&&m.attachment.data){
     reader.readAsDataURL(voiceBlob);
   });
   $("voiceModal").addEventListener("click",function(ev){if(ev.target===$("voiceModal"))closeVoiceModal()});
-  var cameraStream=null,cameraFacing="environment",cameraMode="photo",cameraRecorder=null,cameraChunks=[],cameraRecordTimer=null,cameraDiscardRecording=false;
+  var cameraStream=null,cameraStartPromise=null,cameraFacing="environment",cameraMode="photo",cameraRecorder=null,cameraChunks=[],cameraRecordTimer=null,cameraDiscardRecording=false;
   function stopCameraTracks(){if(cameraStream){cameraStream.getTracks().forEach(function(t){try{t.stop()}catch(e){}});cameraStream=null}$("cameraVideo").srcObject=null}
   function stopCamera(){if(cameraRecordTimer){clearTimeout(cameraRecordTimer);cameraRecordTimer=null}if(cameraRecorder&&cameraRecorder.state==="recording"){cameraDiscardRecording=true;try{cameraRecorder.stop()}catch(e){}}cameraRecorder=null;stopCameraTracks();$("cameraModal").hidden=true;$("cameraCapture").classList.remove("recording");$("cameraCapture").setAttribute("aria-label","Take photo")}
   function startCamera(){
+    if(cameraStream&&cameraStream.getVideoTracks().some(function(t){return t.readyState==="live"})){
+      var activeVideo=$("cameraVideo");activeVideo.classList.toggle("front-camera-mirrored",cameraFacing==="user");activeVideo.srcObject=cameraStream;var activePlay=activeVideo.play();return activePlay&&activePlay.catch?activePlay.catch(function(){}):Promise.resolve();
+    }
+    if(cameraStartPromise)return cameraStartPromise;
     if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){$("cameraError").textContent="Live camera is not available in this browser. Try choosing media from your gallery.";return Promise.reject(new Error("Camera unavailable"))}
     $("cameraError").textContent="";$("cameraStatus").textContent="Starting camera…";
-    return navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:cameraFacing},width:{ideal:1280},height:{ideal:960}},audio:false}).then(function(stream){
+    cameraStartPromise=navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:cameraFacing},width:{ideal:1280},height:{ideal:960}},audio:false}).then(function(stream){
       cameraStream=stream;var v=$("cameraVideo");v.classList.toggle("front-camera-mirrored",cameraFacing==="user");v.srcObject=stream;var p=v.play();$("cameraStatus").textContent=cameraMode==="photo"?"Ready to take a picture":"Ready to record a short video";return p&&p.catch?p.catch(function(){}):undefined;
-    }).catch(function(err){$("cameraError").textContent=err&&err.name==="NotAllowedError"?"Camera access was denied. Allow camera access in Safari settings.":"Could not start this camera. Try switching cameras or check browser permissions.";throw err});
+    }).catch(function(err){$("cameraError").textContent=err&&err.name==="NotAllowedError"?"Camera access was denied. Allow camera access in Safari settings.":"Could not start this camera. Try switching cameras or check browser permissions.";throw err}).then(function(value){cameraStartPromise=null;return value},function(err){cameraStartPromise=null;throw err});
+    return cameraStartPromise;
   }
   function setCameraMode(mode){
     cameraMode=mode==="video"?"video":"photo";
