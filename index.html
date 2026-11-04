@@ -1278,7 +1278,7 @@ var messageText=String(m.text||"");
           if(menuCloseTimer!==null)clearTimeout(menuCloseTimer);
           menuCloseTimer=setTimeout(function(){
             if(!menuPointerInside)closeMessageMenu(row);
-          },1500);
+          },3000);
         }
       }
       quick.addEventListener("pointerenter",pauseMenuClose);
@@ -1300,7 +1300,7 @@ var messageText=String(m.text||"");
         requestAnimationFrame(positionQuickbar);
         if(menuCloseTimer!==null){clearTimeout(menuCloseTimer);menuCloseTimer=null;}
         menuPointerInside=quick.matches(":hover");
-        if(!coarse&&!menuPointerInside){menuCloseTimer=setTimeout(function(){if(!menuPointerInside)closeMessageMenu(row)},5000);}
+        if(!menuPointerInside){menuCloseTimer=setTimeout(function(){if(!menuPointerInside)closeMessageMenu(row)},3500);}
       };
       col.appendChild(dots);
       var desktopReply=el("button","reply-desktop-action","↩");desktopReply.type="button";desktopReply.title="Reply to this message";desktopReply.setAttribute("aria-label","Reply to this message");
