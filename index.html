@@ -125,14 +125,14 @@ body.theme-light{--bg:#f0f0f0;--win:#fff;--ink:#171717;--muted:#666;--dim:#85858
 .row.mine .react.active{border-color:#aaa;background:#333;color:#fff}
 
 /* Small ellipsis is delayed on desktop; menu floats over the thread and never changes layout. */
-.dots-action{position:absolute;z-index:8;top:50%;width:22px;height:24px;padding:0;border:0;border-radius:7px;background:rgba(25,25,25,.92);color:var(--muted);font-size:17px;line-height:1;opacity:0;visibility:hidden;display:grid;place-items:center;transition:opacity .25s ease,background .2s ease;transform:translateY(-50%)}
+.dots-action{position:absolute;z-index:8;top:50%;width:22px;height:24px;padding:0;border:0;border-radius:7px;background:rgba(25,25,25,.92);color:var(--muted);font-size:7px;letter-spacing:2px;line-height:1;opacity:0;visibility:hidden;display:grid;place-items:center;transition:opacity .18s ease,background .2s ease;transform:translateY(-50%)}
 .row:not(.mine) .dots-action{right:-24px}.row.mine .dots-action{left:-24px}
 /* Desktop reply icon sits beside the ellipsis and appears at exactly the same time. */
 .reply-desktop-action{position:absolute;z-index:8;top:50%;transform:translateY(-50%);width:22px;height:24px;padding:0;border:0;border-radius:7px;background:rgba(25,25,25,.92);color:var(--muted);font-size:17px;line-height:1;display:grid;place-items:center;opacity:0;visibility:hidden;white-space:nowrap;transition:opacity .25s ease,background .2s ease}
 .row:not(.mine) .reply-desktop-action{right:-48px}.row.mine .reply-desktop-action{left:-48px}
 .row.menu-ready .reply-desktop-action,.row.show-reactions .reply-desktop-action,.row:focus-within .reply-desktop-action{opacity:.82;visibility:visible}
 .reply-desktop-action:hover,.reply-desktop-action:focus-visible{opacity:1!important;background:var(--hover);outline:none}
-.row:hover .dots-action,.row.menu-ready .dots-action,.row.show-reactions .dots-action,.row:focus-within .dots-action{opacity:.82;visibility:visible}
+.row:hover .dots-action,.row.menu-ready .dots-action,.row.show-reactions .dots-action,.row:focus-within .dots-action{opacity:1;visibility:visible;pointer-events:auto}
 /* Mobile: keep the message ellipsis visible without hover; desktop keeps its existing delayed behavior. */
 @media (max-width:760px), (pointer:coarse){.row:not(.has-image):not(.show-reactions) .dots-action{opacity:0!important;visibility:hidden!important;pointer-events:none!important;display:none!important}.row.show-reactions .dots-action,.row.has-image .dots-action{display:grid!important;position:fixed!important;z-index:2147483001!important;opacity:1!important;visibility:visible!important;pointer-events:auto!important;width:30px;height:30px;border:1px solid rgba(255,255,255,.16);border-radius:10px;background:rgba(32,32,32,.96);color:#fff;font-size:19px;box-shadow:0 2px 8px rgba(0,0,0,.35);transform:none!important}.row.has-image .dots-action:active,.row.show-reactions .dots-action:active{opacity:1;background:#444}}
 .dots-action:hover,.dots-action:focus-visible{opacity:1!important;background:var(--hover);outline:none}
@@ -1295,7 +1295,7 @@ var messageText=String(m.text||"");
         setTimeout(resumeMenuClose,350);
       },{passive:true});
       quick.addEventListener("touchcancel",resumeMenuClose,{passive:true});
-      var dots=el("button","dots-action","⋯");dots.type="button";dots.title="Message options";dots.setAttribute("aria-label","Open message options");
+      var dots=el("button","dots-action","•••");dots.type="button";dots.title="Message options";dots.setAttribute("aria-label","Open message options");
       dots.onclick=function(ev){
         ev.stopPropagation();
         if(row.classList.contains("show-reactions")){closeMessageMenu(row);return;}
@@ -1335,7 +1335,7 @@ if(m.attachment&&m.attachment.data){
         if(/^image\//.test(atype)){var ai=document.createElement("img");ai.className="attachment";ai.src=m.attachment.data;ai.alt="Sent image";ai.addEventListener("click",function(){openImageLightbox(m.attachment.data)});col.appendChild(ai)}else if(/^video\//.test(atype)){var av=document.createElement("video");av.className="chat-video";av.src=m.attachment.data;av.controls=true;av.playsInline=true;av.preload="metadata";col.appendChild(av)}else if(/^audio\//.test(atype)){col.appendChild(makeVoicePlayer(m.attachment.data))}else{var al=document.createElement("a");al.className="attachment-link";al.href=m.attachment.data;al.download=m.attachment.name||"attachment";al.textContent="📎 "+(m.attachment.name||"Download attachment");al.target="_blank";al.rel="noopener";col.appendChild(al)}
       }
       var hoverTimer=null;
-      row.addEventListener("mouseenter",function(){clearTimeout(hoverTimer);hoverTimer=setTimeout(function(){row.classList.add("menu-ready")},1000)});
+      row.addEventListener("mouseenter",function(){clearTimeout(hoverTimer);row.classList.add("menu-ready")});
       row.addEventListener("mouseleave",function(){clearTimeout(hoverTimer);row.classList.remove("menu-ready");if(row.classList.contains("show-reactions")&&!menuPointerInside){if(menuCloseTimer!==null)clearTimeout(menuCloseTimer);menuCloseTimer=setTimeout(function(){if(!menuPointerInside)closeMessageMenu(row)},1500);}});
       window.addEventListener("resize",function(){if(row.classList.contains("show-reactions")){positionDots();positionQuickbar()}else if(hasImage)positionDots()});
       th.addEventListener("scroll",function(){if(row.classList.contains("show-reactions")){positionDots();positionQuickbar()}else if(hasImage)positionDots()},{passive:true});
