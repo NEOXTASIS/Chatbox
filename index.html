@@ -1381,7 +1381,8 @@ if(m.attachment&&m.attachment.data){
         rb.type="button";rb.title="React with "+emoji;rb.appendChild(document.createTextNode(emoji));if(count>=2)rb.appendChild(el("span","count",String(count)));
         rb.onclick=function(){toggleReaction(m.id,emoji)};bar.appendChild(rb);
       });
-      col.classList.add("has-reactions");col.appendChild(bar);
+      // Do not render an empty reaction capsule under messages with no reactions.
+      if(bar.children.length){col.classList.add("has-reactions");col.appendChild(bar);}
       row.appendChild(col);th.appendChild(row);if(hasImage)positionDots();
     });
     if(anchor){th.scrollTop=anchor.top+(th.scrollHeight-anchor.h);anchor=null}
