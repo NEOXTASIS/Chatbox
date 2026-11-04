@@ -675,6 +675,18 @@ button:active{transform:scale(.96)}
 .composer-shell>.send{order:3!important;flex:0 0 38px!important}
 @media(max-width:480px){.composer-shell>.voice-send-btn{flex-basis:36px!important;width:36px!important;height:36px!important}}
 
+/* Gallery picker sits beside the plus button without overlapping it. */
+.composer-tools{flex:0 0 88px!important;width:88px!important;min-width:88px!important;justify-content:flex-start!important;gap:4px!important}
+.composer-tools>.composer-plus,.composer-tools>.attach-tool{flex:0 0 40px!important;width:40px!important;height:40px!important;border-radius:50%!important;display:grid!important;place-items:center!important;box-sizing:border-box!important;background:rgba(255,255,255,.07)!important;border:1px solid rgba(255,255,255,.13)!important;color:#f5f5f5!important;padding:0!important}
+.composer-tools>.attach-tool{font-size:0!important}
+.composer-tools>.composer-plus svg,.composer-tools>.attach-tool svg{width:21px!important;height:21px!important;display:block!important;fill:none!important;stroke:currentColor!important;stroke-width:1.8!important;stroke-linecap:round!important;stroke-linejoin:round!important}
+.composer-tools>.attach-tool:hover,.composer-tools>.composer-plus:hover{background:rgba(255,255,255,.14)!important;border-color:rgba(255,255,255,.28)!important}
+@media(max-width:480px){
+ .composer-tools{flex:0 0 78px!important;width:78px!important;min-width:78px!important;gap:2px!important}
+ .composer-tools>.composer-plus,.composer-tools>.attach-tool{flex-basis:36px!important;width:36px!important;height:36px!important}
+ .composer-tools>.composer-plus svg,.composer-tools>.attach-tool svg{width:19px!important;height:19px!important}
+}
+
 /* Keep composer controls vertically centered and evenly spaced */
 .composer-shell{display:flex!important;align-items:center!important;gap:10px!important;padding-top:8px!important;padding-bottom:8px!important;min-height:56px!important}
 .composer-tools{align-self:center!important;display:flex!important;align-items:center!important;flex:0 0 38px!important}
