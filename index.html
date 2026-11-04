@@ -1371,7 +1371,7 @@ if(m.attachment&&m.attachment.data){
       var reactionCounts={};
       reactions.forEach(function(re){reactionCounts[re.emoji]=(reactionCounts[re.emoji]||0)+1});
       var bar=el("div","reactions");
-      PICKER_EMOJIS.forEach(function(emoji){
+      PICKER_EMOJIS.filter(function(emoji,index,list){return list.indexOf(emoji)===index}).forEach(function(emoji){
         var count=reactionCounts[emoji]||0;
         if(!count)return;
         var rb=el("button","react"+(reactions.some(function(re){return re.uid===uid&&re.emoji===emoji})?" active":""));
@@ -1380,7 +1380,7 @@ if(m.attachment&&m.attachment.data){
       });
       var add=el("button","reaction-add","☻+");add.type="button";add.title="Add a reaction";add.setAttribute("aria-label","Add a reaction");
       var picker=el("div","reaction-add-picker");picker.hidden=true;picker.setAttribute("aria-label","Choose a reaction");
-      PICKER_EMOJIS.forEach(function(emoji){var choice=el("button","",emoji);choice.type="button";choice.title=emoji;choice.onclick=function(ev){ev.stopPropagation();toggleReaction(m.id,emoji);picker.hidden=true;};picker.appendChild(choice);});
+      PICKER_EMOJIS.filter(function(emoji,index,list){return list.indexOf(emoji)===index}).forEach(function(emoji){var choice=el("button","",emoji);choice.type="button";choice.title=emoji;choice.onclick=function(ev){ev.stopPropagation();toggleReaction(m.id,emoji);picker.hidden=true;};picker.appendChild(choice);});
       add.onclick=function(ev){ev.stopPropagation();picker.hidden=!picker.hidden;};
       bar.appendChild(add);bar.appendChild(picker);
       col.classList.add("has-reactions");col.appendChild(bar);
