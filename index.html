@@ -132,7 +132,7 @@ body.theme-light{--bg:#f0f0f0;--win:#fff;--ink:#171717;--muted:#666;--dim:#85858
 .row:not(.mine) .reply-desktop-action{right:-48px}.row.mine .reply-desktop-action{left:-48px}
 .row.menu-ready .reply-desktop-action,.row.show-reactions .reply-desktop-action,.row:focus-within .reply-desktop-action{opacity:.82;visibility:visible}
 .reply-desktop-action:hover,.reply-desktop-action:focus-visible{opacity:1!important;background:var(--hover);outline:none}
-.row:hover .dots-action,.row.menu-ready .dots-action,.row.show-reactions .dots-action,.row:focus-within .dots-action{opacity:1;visibility:visible;pointer-events:auto}
+.row:hover .dots-action,.col:hover .dots-action,.row.menu-ready .dots-action,.row.show-reactions .dots-action,.row:focus-within .dots-action{opacity:1;visibility:visible;pointer-events:auto}
 /* Mobile: keep the message ellipsis visible without hover; desktop keeps its existing delayed behavior. */
 @media (max-width:760px), (pointer:coarse){.row:not(.has-image):not(.show-reactions) .dots-action{opacity:0!important;visibility:hidden!important;pointer-events:none!important;display:none!important}.row.show-reactions .dots-action,.row.has-image .dots-action{display:grid!important;position:fixed!important;z-index:2147483001!important;opacity:1!important;visibility:visible!important;pointer-events:auto!important;width:30px;height:30px;border:1px solid rgba(255,255,255,.16);border-radius:10px;background:rgba(32,32,32,.96);color:#fff;font-size:19px;box-shadow:0 2px 8px rgba(0,0,0,.35);transform:none!important}.row.has-image .dots-action:active,.row.show-reactions .dots-action:active{opacity:1;background:#444}}
 .dots-action:hover,.dots-action:focus-visible{opacity:1!important;background:var(--hover);outline:none}
@@ -1254,13 +1254,23 @@ var messageText=String(m.text||"");
         quick.style.left=Math.round(left)+"px";quick.style.top=Math.round(top)+"px";
       }
       function positionDots(){
-        // Anchor to the bubble/media itself, never the full message column:
-        // the reaction capsule below it must not shift the ellipsis vertically.
+        // Center the ellipsis against the bubble/media itself, not the column
+        // (which also contains the reaction capsule beneath the message).
         var rect=messageAnchor().getBoundingClientRect();
+        var touchLayout=window.matchMedia("(max-width:760px), (pointer:coarse)").matches;
+        if(!touchLayout){
+          var colRect=col.getBoundingClientRect();
+          dots.style.position="absolute";
+          dots.style.top=Math.round(rect.top+rect.height/2-colRect.top-dots.offsetHeight/2)+"px";
+          dots.style.left="";dots.style.right="";
+          dots.style.transform="none";
+          return;
+        }
         dots.style.position="fixed";
         dots.style.top=Math.round(Math.max(8,Math.min(window.innerHeight-38,rect.top+rect.height/2-15)))+"px";
         dots.style.left=isMe?"auto":Math.round(Math.min(window.innerWidth-38,rect.right+5))+"px";
         dots.style.right=isMe?Math.round(Math.max(5,window.innerWidth-rect.left+5))+"px":"auto";
+        dots.style.transform="none";
       }
       REACTION_EMOJIS.forEach(function(emoji){
         var qb=el("button","react",emoji);qb.type="button";qb.title="React with "+emoji;qb.setAttribute("aria-label","React with "+emoji);
