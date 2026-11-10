@@ -1545,8 +1545,8 @@ var messageText=String(m.text||"");
         var editBtn=el("button","menu-action","Edit");editBtn.type="button";
         editBtn.onclick=function(ev){ev.stopPropagation();var next=window.prompt("Edit your message:",m.text||"");if(next===null){closeMessageMenu(row);return}next=next.trim();if(!next){toast("Message cannot be empty.");return}if(next.length>2000){toast("Messages must be 2,000 characters or fewer.");return}collFor(room).doc(m.id).update({text:next,editedAt:Date.now()}).then(function(){toast("Message edited.")}).catch(function(){toast("Couldn’t edit this message. Check Firestore rules.")});closeMessageMenu(row)};
         quick.appendChild(editBtn);
-        var deleteBtn=el("button","menu-action danger","Delete");deleteBtn.type="button";
-        deleteBtn.onclick=function(ev){ev.stopPropagation();if(!window.confirm("Delete this message? This cannot be undone.")){closeMessageMenu(row);return}collFor(room).doc(m.id).delete().catch(function(){toast("Couldn’t delete that message.")});closeMessageMenu(row)};
+        var deleteBtn=el("button","menu-action danger","Delete for everyone");deleteBtn.type="button";
+        deleteBtn.onclick=function(ev){ev.stopPropagation();if(!window.confirm("Delete this message for everyone in this conversation? This cannot be undone.")){closeMessageMenu(row);return}collFor(room).doc(m.id).delete().catch(function(){toast("Couldn’t delete that message.")});closeMessageMenu(row)};
         quick.appendChild(deleteBtn);
       }
       removeQuickbarReplyButtons();
