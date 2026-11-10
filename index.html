@@ -1313,10 +1313,18 @@ var messageText=String(m.text||"");
         var touchLayout=window.matchMedia("(max-width:760px), (pointer:coarse)").matches;
         if(!touchLayout){
           var colRect=col.getBoundingClientRect();
+          var desktopTop=Math.round(rect.top+rect.height/2-colRect.top-dots.offsetHeight/2);
           dots.style.position="absolute";
-          dots.style.top=Math.round(rect.top+rect.height/2-colRect.top-dots.offsetHeight/2)+"px";
+          dots.style.top=desktopTop+"px";
           dots.style.left="";dots.style.right="";
           dots.style.transform="none";
+
+          /* Keep the Reply control on the same vertical center as the ellipsis. */
+          desktopReply.style.position="absolute";
+          desktopReply.style.top=desktopTop+"px";
+          desktopReply.style.left="";
+          desktopReply.style.right="";
+          desktopReply.style.transform="none";
           return;
         }
         dots.style.position="fixed";
@@ -1393,6 +1401,8 @@ var messageText=String(m.text||"");
       var desktopReply=el("button","reply-desktop-action","↩");desktopReply.type="button";desktopReply.title="Reply to this message";desktopReply.setAttribute("aria-label","Reply to this message");
       desktopReply.onclick=function(ev){ev.stopPropagation();quoteMessage()};
       col.appendChild(desktopReply);
+      /* Position both action buttons after the message and controls are in the DOM. */
+      requestAnimationFrame(positionDots);
       function quoteMessage(){
         replyTarget={id:m.id,uid:m.uid,name:String(nameOf(profiles[m.uid])||"Message"),text:String(m.text||"").slice(0,500)};
         $("replyPreviewName").textContent="Replying to "+replyTarget.name;
