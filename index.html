@@ -940,6 +940,9 @@ body.theme-light .mark{background:linear-gradient(145deg,rgba(180,180,180,.45),r
 @keyframes typingFadeIn{from{opacity:0;transform:translateY(3px)}to{opacity:1;transform:translateY(0)}}
 body.theme-light .typing-dots i{background:#555}
 @media(prefers-reduced-motion:reduce){.typing-indicator{animation:none}.typing-dots i{animation:none;opacity:.7}}
+
+/* Mobile uses swipe-to-reply; never show the desktop reply control on touch layouts. */
+@media (max-width:760px), (pointer:coarse){.reply-desktop-action{display:none!important;visibility:hidden!important;pointer-events:none!important}}
 </style>
 </head>
 <body>
@@ -1571,7 +1574,7 @@ var messageText=String(m.text||"");
         if(!menuPointerInside){menuCloseTimer=setTimeout(function(){if(!menuPointerInside)closeMessageMenu(row)},1500);}
       };
       col.appendChild(dots);
-      var desktopReply=el("button","reply-desktop-action","↩");desktopReply.type="button";desktopReply.title="Reply to this message";desktopReply.setAttribute("aria-label","Reply to this message");
+      var desktopReply=el("button","reply-desktop-action");desktopReply.type="button";desktopReply.title="Reply to this message";desktopReply.setAttribute("aria-label","Reply to this message");desktopReply.innerHTML='<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 14 4 9l5-5"/><path d="M4 9h9a7 7 0 0 1 7 7v2"/></svg>';
       desktopReply.onclick=function(ev){ev.stopPropagation();quoteMessage()};
       col.appendChild(desktopReply);
       /* Position both action buttons after the message and controls are in the DOM. */
