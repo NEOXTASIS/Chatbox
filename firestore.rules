@@ -82,13 +82,26 @@ service cloud.firestore {
       // Permit only the sender to edit message text and its edit timestamp.
       // All other fields, including sender identity and attachments, remain immutable.
       allow update: if validRoomAccess()
-        && resource.data.uid == request.auth.uid
-        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['text', 'editedAt'])
-        && request.resource.data.diff(resource.data).affectedKeys().hasAll(['text', 'editedAt'])
-        && request.resource.data.text is string
-        && request.resource.data.text.size() > 0
-        && request.resource.data.text.size() <= 2000
-        && request.resource.data.editedAt is number;
+        && (
+          (
+            resource.data.uid == request.auth.uid
+            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['text', 'editedAt'])
+            && request.resource.data.diff(resource.data).affectedKeys().hasAll(['text', 'editedAt'])
+            && request.resource.data.text is string
+            && request.resource.data.text.size() > 0
+            && request.resource.data.text.size() <= 2000
+            && request.resource.data.editedAt is number
+          )
+          ||
+          (
+            resource.data.uid != request.auth.uid
+            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['readBy'])
+            && request.resource.data.readBy is list
+            && request.resource.data.readBy.size() <= 2
+            && request.resource.data.readBy.hasAll(resource.data.readBy)
+            && request.auth.uid in request.resource.data.readBy
+          )
+        );
 
       allow delete: if validRoomAccess()
         && resource.data.uid == request.auth.uid;
