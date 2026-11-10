@@ -989,7 +989,7 @@ body.theme-light .mark{background:linear-gradient(145deg,rgba(180,180,180,.45),r
     <div class="side-label">Chats</div>
     <input id="chatSearch" class="side-search" type="search" placeholder="Find a person…" aria-label="Find a person" autocomplete="off">
     <div id="list" class="list"></div>
-    <div class="side-foot"><button id="memBtn" class="btn" hidden>Members</button></div>
+    <div class="side-foot"><button id="archiveViewBtn" class="btn" type="button" aria-pressed="false">Archived chats</button><button id="memBtn" class="btn" hidden>Members</button></div>
   </aside>
   <div id="scrim" class="scrim" hidden></div>
   <section class="main">
@@ -1000,6 +1000,8 @@ body.theme-light .mark{background:linear-gradient(145deg,rgba(180,180,180,.45),r
         <button id="actionsBtn" class="head-tool actions-toggle" type="button" aria-label="More options" aria-expanded="false" title="More options">•••</button>
         <div id="actionsMenu" class="actions-menu" hidden>
           <button id="searchBtn" class="head-tool" type="button" title="Search loaded messages" aria-label="Search messages">Search messages</button>
+          <button id="archiveChatBtn" class="head-tool" type="button" title="Archive or restore this conversation" hidden>Archive chat</button>
+          <button id="exportChatBtn" class="head-tool" type="button" title="Export this conversation as a text file" hidden>Export chat</button>
           <button id="attachmentsBtn" class="head-tool" type="button" title="Browse images and voice messages" aria-label="Attachments">Attachments</button>
           <button id="muteBtn" class="head-tool" type="button" title="Toggle notifications for this chat" aria-pressed="false" hidden>Chat alerts on</button>
           <button id="nicknameBtn" class="head-tool" type="button" title="Set a nickname for this contact" hidden>Nickname</button>
@@ -1084,13 +1086,21 @@ body.theme-light .mark{background:linear-gradient(145deg,rgba(180,180,180,.45),r
   var auth=null,db=null,uid=null,isOwner=false,profiles={},msgs=[],mine=null,stickNext=true,newAvatar="",required=false,toastT=null,replyTarget=null;
   var unsubs=[],msgUnsub=null,unreadUnsubs={},unreadCounts={},handledDenied=false,room=null,limitN=PAGE,hasMore=false,anchor=null,allowedList=[],pendingList=[],authMode="login",authBusy=false;
   var audioCtx=null,alertsEnabled=false,firstSnapshotByRoom={},knownMessageIds={},lastAlertAt=0;
-  var searchQuery="",chatSearchQuery="",pinnedChats={},mutedChats={},lightTheme=false;
+  var searchQuery="",chatSearchQuery="",pinnedChats={},mutedChats={},lightTheme=false,archivedChats={},showArchived=false,pinnedMessages={},favoriteMessages={};
   var ALERTS_STORAGE_KEY="chatboxAlertsEnabled";
   var THEME_STORAGE_KEY="chatboxTheme";
   try{lightTheme=window.localStorage.getItem(THEME_STORAGE_KEY)==="light";}catch(e){}
   function userStoreKey(prefix){return prefix+":"+(uid||"guest")}
   function loadUserMap(prefix){try{return JSON.parse(window.localStorage.getItem(userStoreKey(prefix))||"{}")||{}}catch(e){return {}}}
   function saveUserMap(prefix,map){try{window.localStorage.setItem(userStoreKey(prefix),JSON.stringify(map))}catch(e){}}
+  function messageMap(prefix){try{return JSON.parse(localStorage.getItem(userStoreKey(prefix))||"{}")||{}}catch(e){return {}}}
+  function saveMessageMap(prefix,map){try{localStorage.setItem(userStoreKey(prefix),JSON.stringify(map))}catch(e){toast("This device could not save that preference.")}}
+  function messageKey(r,id){return String(r||"")+":"+String(id||"")}
+  function toggleMessageMap(prefix,map,id){
+    var key=messageKey(room,id);
+    if(map[key])delete map[key];else map[key]=true;
+    saveMessageMap(prefix,map);render();
+  }
   function applyTheme(){document.body.classList.toggle("theme-light",lightTheme);var b=$("themeBtn");if(b){b.textContent=lightTheme?"Dark theme":"Light theme";b.setAttribute("aria-pressed",lightTheme?"true":"false");}}
   try{alertsEnabled=window.localStorage.getItem(ALERTS_STORAGE_KEY)==="true";}catch(e){alertsEnabled=false;}
   var reactionCache={},reactionUnsubs={},REACTION_EMOJIS=["👍","❤️","😂","😮","😢","🙏"];
@@ -1186,9 +1196,10 @@ body.theme-light .mark{background:linear-gradient(145deg,rgba(180,180,180,.45),r
   }
   function paintSide(){
     var l=$("list");l.textContent="";
-    var ids=Object.keys(profiles).filter(function(k){return k!==uid&&nicknameOf(k).toLowerCase().indexOf(chatSearchQuery)>=0}).sort(function(a,b){if(!!pinnedChats[a]!==!!pinnedChats[b])return pinnedChats[a]?-1:1;return nameOf(profiles[a]).toLowerCase()<nameOf(profiles[b]).toLowerCase()?-1:1});
-    if(!ids.length)l.appendChild(el("div","side-empty",chatSearchQuery?"No members match your search.":"No other approved members yet."));
+    var ids=Object.keys(profiles).filter(function(k){return k!==uid&&nicknameOf(k).toLowerCase().indexOf(chatSearchQuery)>=0&&!!archivedChats[k]===showArchived}).sort(function(a,b){if(!!pinnedChats[a]!==!!pinnedChats[b])return pinnedChats[a]?-1:1;return nameOf(profiles[a]).toLowerCase()<nameOf(profiles[b]).toLowerCase()?-1:1});
+    if(!ids.length)l.appendChild(el("div","side-empty",showArchived?"No archived conversations.":chatSearchQuery?"No members match your search.":"No other approved members yet."));
     ids.forEach(function(k){l.appendChild(conv(k,nicknameOf(k),profiles[k],false))});
+    var av=$("archiveViewBtn");if(av){av.textContent=showArchived?"Back to chats":"Archived chats";av.setAttribute("aria-pressed",showArchived?"true":"false")}
   }
   function paintTitle(){
     $("title").textContent=titleOf();
@@ -1197,6 +1208,8 @@ body.theme-light .mark{background:linear-gradient(145deg,rgba(180,180,180,.45),r
     if(cl)cl.textContent="";
     $("msg").placeholder="Message";
     var mb=$("muteBtn");mb.hidden=!room;mb.textContent=room&&mutedChats[room]?"Chat alerts off":"Chat alerts on";mb.setAttribute("aria-pressed",room&&mutedChats[room]?"true":"false");
+    var ab=$("archiveChatBtn");if(ab){ab.hidden=!room;ab.textContent=room&&archivedChats[room]?"Restore chat":"Archive chat"}
+    var eb=$("exportChatBtn");if(eb)eb.hidden=!room;
   }
   function paintMe(){
     var b=$("me");b.textContent="";
@@ -1500,6 +1513,21 @@ var messageText=String(m.text||"");
       }
       // Reply is handled by the separate desktop reply icon or mobile swipe gesture;
       // keep the emoji/options bar free of a text Reply button.
+      var savedKey=messageKey(room,m.id);
+      var favoriteBtn=el("button","menu-action",favoriteMessages[savedKey]?"★ Remove favorite":"☆ Favorite");
+      favoriteBtn.type="button";favoriteBtn.onclick=function(ev){ev.stopPropagation();toggleMessageMap("chatboxFavoriteMessages",favoriteMessages,m.id);closeMessageMenu(row);toast(favoriteMessages[savedKey]?"Removed from favorites.":"Added to favorites on this device.")};quick.appendChild(favoriteBtn);
+      var pinMessageBtn=el("button","menu-action",pinnedMessages[savedKey]?"Unpin message":"Pin message");
+      pinMessageBtn.type="button";pinMessageBtn.onclick=function(ev){ev.stopPropagation();toggleMessageMap("chatboxPinnedMessages",pinnedMessages,m.id);closeMessageMenu(row);toast(pinnedMessages[savedKey]?"Message unpinned.":"Message pinned on this device.")};quick.appendChild(pinMessageBtn);
+      var forwardBtn=el("button","menu-action","Forward");
+      forwardBtn.type="button";forwardBtn.onclick=function(ev){
+        ev.stopPropagation();
+        if(!window.confirm("Forward this message to the other approved chat participant?"))return;
+        var forwardText=String(m.text||"");
+        if(m.attachment){toast("Attachment forwarding is not included yet; this will forward the message text only.");}
+        if(!forwardText&&m.attachment)forwardText="[Forwarded attachment: "+String(m.attachment.name||m.attachment.type||"file")+"]";
+        collFor(room).add({uid:uid,text:("↪ Forwarded: "+forwardText).slice(0,2000),t:Date.now(),readBy:[],forwardedFrom:{messageId:m.id,uid:m.uid}}).then(function(){toast("Message forwarded in this conversation.")}).catch(function(){toast("Couldn’t forward this message. Check Firestore rules.")});
+        closeMessageMenu(row);
+      };quick.appendChild(forwardBtn);
       if(isMe){
         var editBtn=el("button","menu-action","Edit");editBtn.type="button";
         editBtn.onclick=function(ev){ev.stopPropagation();var next=window.prompt("Edit your message:",m.text||"");if(next===null){closeMessageMenu(row);return}next=next.trim();if(!next){toast("Message cannot be empty.");return}if(next.length>2000){toast("Messages must be 2,000 characters or fewer.");return}collFor(room).doc(m.id).update({text:next,editedAt:Date.now()}).then(function(){toast("Message edited.")}).catch(function(){toast("Couldn’t edit this message. Check Firestore rules.")});closeMessageMenu(row)};
@@ -2002,7 +2030,29 @@ if(m.attachment&&m.attachment.data){
   });
 
   $("alertsBtn").onclick=toggleAlerts;
-  pinnedChats=loadUserMap("chatboxPinned");mutedChats=loadUserMap("chatboxMuted");applyTheme();
+  $("archiveViewBtn").onclick=function(){showArchived=!showArchived;paintSide();};
+  $("archiveChatBtn").onclick=function(){
+    if(!room)return;
+    if(archivedChats[room])delete archivedChats[room];else archivedChats[room]=true;
+    saveUserMap("chatboxArchived",archivedChats);paintTitle();paintSide();closeActionsMenu();
+    toast(archivedChats[room]?"Conversation archived on this device.":"Conversation restored.");
+  };
+  $("exportChatBtn").onclick=function(){
+    if(!room)return;
+    var lines=["Chatbox conversation with "+titleOf(),"Exported "+new Date().toLocaleString(),"",""];
+    msgs.forEach(function(m){
+      var sender=m.uid===uid?(mine&&mine.name||"You"):nameOf(profiles[m.uid]);
+      var line="["+new Date(m.t||0).toLocaleString()+"] "+sender+": "+String(m.text||"");
+      if(m.attachment)line+=" [Attachment: "+String(m.attachment.name||m.attachment.type||"file")+"]";
+      if(m.replyTo&&m.replyTo.text)line+=" [Reply to: "+String(m.replyTo.text).replace(/\s+/g," ").slice(0,160)+"]";
+      lines.push(line);
+    });
+    var blob=new Blob([lines.join("\n")],{type:"text/plain;charset=utf-8"}),url=URL.createObjectURL(blob),a=document.createElement("a");
+    a.href=url;a.download="chatbox-"+String(titleOf()).replace(/[^a-z0-9_-]+/gi,"-")+"-"+new Date().toISOString().slice(0,10)+".txt";
+    document.body.appendChild(a);a.click();a.remove();setTimeout(function(){URL.revokeObjectURL(url)},1000);
+    closeActionsMenu();toast("Exported the messages currently loaded in this chat.");
+  };
+  pinnedChats=loadUserMap("chatboxPinned");mutedChats=loadUserMap("chatboxMuted");archivedChats=loadUserMap("chatboxArchived");pinnedMessages=messageMap("chatboxPinnedMessages");favoriteMessages=messageMap("chatboxFavoriteMessages");applyTheme();
   updateAlertsButton();
   $("msg").oninput=function(){fit();saveDraftForRoom(room)};
   $("msg").onkeydown=function(e){if(e.key==="Enter"&&!e.shiftKey&&!coarse){e.preventDefault();sendComposer()}};
