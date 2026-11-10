@@ -843,6 +843,23 @@ body.theme-light .mark{background:linear-gradient(145deg,rgba(180,180,180,.45),r
   pointer-events:none;
 }
 
+
+/* Keep the composer attachment "+" as a bare icon, without a circular button. */
+#composerPlus{
+  border:0!important;
+  border-radius:0!important;
+  background:transparent!important;
+  box-shadow:none!important;
+}
+#composerPlus:hover,
+#composerPlus:focus-visible,
+#composerPlus:active{
+  border:0!important;
+  border-radius:0!important;
+  background:transparent!important;
+  box-shadow:none!important;
+}
+
 /* On touch layouts, show Reply beside the existing message ellipsis.
    positionDots() in the message renderer supplies their matching coordinates. */
 @media (max-width:760px), (pointer:coarse){
