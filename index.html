@@ -948,6 +948,17 @@ body.theme-light .typing-dots i{background:#555}
   .jump-latest{left:auto!important;right:22px!important;bottom:calc(104px + env(safe-area-inset-bottom,0px))!important;transform:none!important}
   .jump-latest:active{transform:scale(.94)!important}
 }
+
+/* Mobile simplification: keep the reply and ellipsis controls desktop-only. */
+@media (max-width:760px), (pointer:coarse){
+  .dots-action,
+  .reply-desktop-action{
+    display:none!important;
+    visibility:hidden!important;
+    opacity:0!important;
+    pointer-events:none!important;
+  }
+}
 </style>
 </head>
 <body>
