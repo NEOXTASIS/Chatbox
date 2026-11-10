@@ -1527,11 +1527,18 @@ var messageText=String(m.text||"");
       var forwardBtn=el("button","menu-action","Forward");
       forwardBtn.type="button";forwardBtn.onclick=function(ev){
         ev.stopPropagation();
-        if(!window.confirm("Forward this message to the other approved chat participant?"))return;
-        var forwardText=String(m.text||"");
-        if(m.attachment){toast("Attachment forwarding is not included yet; this will forward the message text only.");}
+        var targets=Object.keys(profiles).filter(function(k){return k!==uid;});
+        if(!targets.length){toast("There are no other approved chats to forward to.");return}
+        var choices=targets.map(function(k,i){return (i+1)+". "+nicknameOf(k)}).join("\\n");
+        var answer=window.prompt("Forward to which conversation? Enter its number:\\n"+choices);
+        if(answer===null){closeMessageMenu(row);return}
+        var index=Number(answer)-1;
+        if(!Number.isInteger(index)||index<0||index>=targets.length){toast("Choose a valid conversation number.");return}
+        var target=targets[index],forwardText=String(m.text||"");
         if(!forwardText&&m.attachment)forwardText="[Forwarded attachment: "+String(m.attachment.name||m.attachment.type||"file")+"]";
-        collFor(room).add({uid:uid,text:("↪ Forwarded: "+forwardText).slice(0,2000),t:Date.now(),readBy:[],forwardedFrom:{messageId:m.id,uid:m.uid}}).then(function(){toast("Message forwarded in this conversation.")}).catch(function(){toast("Couldn’t forward this message. Check Firestore rules.")});
+        var payload={uid:uid,text:("↪ Forwarded: "+forwardText).slice(0,2000),t:Date.now(),readBy:[],forwardedFrom:{messageId:m.id,uid:m.uid}};
+        if(m.attachment)payload.attachment=m.attachment;
+        collFor(target).add(payload).then(function(){toast("Message forwarded to "+nicknameOf(target)+".")}).catch(function(){toast("Couldn’t forward this message. Check Firestore rules and attachment size.")});
         closeMessageMenu(row);
       };quick.appendChild(forwardBtn);
       if(isMe){
