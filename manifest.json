@@ -10,9 +10,9 @@
   "theme_color": "#080a12",
   "icons": [
     {
-      "src": "./dezra-logo.png",
+      "src": "./dezra-logo.svg",
       "sizes": "any",
-      "type": "image/png",
+      "type": "image/svg+xml",
       "purpose": "any maskable"
     }
   ]
