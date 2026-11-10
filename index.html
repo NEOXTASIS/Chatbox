@@ -964,6 +964,12 @@ body.theme-light .typing-dots i{background:#555}
 .home .voxa-logo{display:block;width:min(230px,72vw);height:auto;max-height:190px;object-fit:contain;margin:0 0 2px;filter:drop-shadow(0 8px 18px rgba(255,255,255,.10))}
 .home h1{display:none}
 .brand .voxa-brand-mark{display:block;width:30px;height:30px;flex:none;object-fit:contain;filter:drop-shadow(0 0 5px rgba(255,255,255,.18))}
+
+/* Reference-matched transparent chrome VOXA emblem */
+.home h1{display:block!important;margin:0 0 10px;font-family:"Orbitron","Arial Black",sans-serif;letter-spacing:.16em;font-size:clamp(28px,6vw,38px);color:#e6e8ec;text-shadow:0 2px 12px rgba(255,255,255,.12)}
+.home .voxa-logo{display:none!important}
+.home .voxa-mark{display:block;width:min(220px,68vw);height:auto;max-height:210px;object-fit:contain;margin:0 auto 12px;filter:drop-shadow(0 8px 16px rgba(255,255,255,.12))}
+.brand .voxa-brand-mark{width:32px;height:32px;object-fit:contain}
 </style>
 </head>
 <body>
@@ -999,7 +1005,7 @@ body.theme-light .typing-dots i{background:#555}
 </div>
 
 <section id="home" class="home">
-  <img class="voxa-logo" src="./voxa-logo.svg" alt="VOXA">
+  <img class="voxa-mark" src="./voxa-mark.svg" alt="VOXA emblem">
   <p class="tag">Private room. Approval required.</p>
   <form id="login" autocomplete="on" novalidate>
     <input id="email" class="field" type="email" inputmode="email" autocomplete="username" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="Email" aria-label="Email" required>
