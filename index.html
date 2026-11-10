@@ -1529,8 +1529,8 @@ var messageText=String(m.text||"");
         ev.stopPropagation();
         var targets=Object.keys(profiles).filter(function(k){return k!==uid;});
         if(!targets.length){toast("There are no other approved chats to forward to.");return}
-        var choices=targets.map(function(k,i){return (i+1)+". "+nicknameOf(k)}).join("\\n");
-        var answer=window.prompt("Forward to which conversation? Enter its number:\\n"+choices);
+        var choices=targets.map(function(k,i){return (i+1)+". "+nicknameOf(k)}).join("\n");
+        var answer=window.prompt("Forward to which conversation? Enter its number:\n"+choices);
         if(answer===null){closeMessageMenu(row);return}
         var index=Number(answer)-1;
         if(!Number.isInteger(index)||index<0||index>=targets.length){toast("Choose a valid conversation number.");return}
