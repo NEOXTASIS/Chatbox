@@ -178,7 +178,7 @@ export default {
       let object;
       let status = 200;
       const rangeHeader = request.headers.get("Range");
-      const rangeMatch = rangeHeader && rangeHeader.match(/^bytes=(\\d*)-(\\d*)$/);
+      const rangeMatch = rangeHeader && rangeHeader.match(/^bytes=(\d*)-(\d*)$/);
       if (rangeHeader && !rangeMatch) {
         return new Response(null, {
           status: 416,
