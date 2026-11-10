@@ -223,7 +223,6 @@ body.theme-light .preference-btn{color:#171717;background:rgba(0,0,0,.06)}
   .head{padding:10px 12px}
   .thread{padding:4px 12px 12px}
   .col{max-width:84%}
-  .reply-desktop-action{display:none!important}
   .row .bub{touch-action:pan-y}
 }
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
@@ -815,6 +814,60 @@ body.theme-light .mark{background:linear-gradient(145deg,rgba(180,180,180,.45),r
     .win{width:100%;height:100%;min-height:0;margin:0;border-radius:0}
     .head{padding-top:calc(10px + env(safe-area-inset-top,0px))}
     .composer{padding-bottom:calc(12px + env(safe-area-inset-bottom,0px))!important}
+  }
+}
+
+
+/* Center attachment controls and their icons inside the circular buttons. */
+#composerPlus,
+#attachBtn{
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  padding:0!important;
+  line-height:0!important;
+  text-align:center!important;
+  box-sizing:border-box!important;
+}
+#composerPlus svg,
+#attachBtn svg{
+  display:block!important;
+  flex:0 0 20px!important;
+  width:20px!important;
+  height:20px!important;
+  margin:0!important;
+  position:static!important;
+  transform:none!important;
+}
+#attachBtn::before{
+  position:absolute;
+  inset:0;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  margin:0!important;
+  line-height:1!important;
+  pointer-events:none;
+}
+
+/* On touch layouts, show Reply beside the existing message ellipsis.
+   positionDots() in the message renderer supplies their matching coordinates. */
+@media (max-width:760px), (pointer:coarse){
+  .row.show-reactions .reply-desktop-action,
+  .row.has-image .reply-desktop-action{
+    display:grid!important;
+    position:fixed!important;
+    z-index:2147483002!important;
+    width:30px!important;
+    height:30px!important;
+    border:1px solid rgba(255,255,255,.16)!important;
+    border-radius:10px!important;
+    background:rgba(32,32,32,.96)!important;
+    color:#fff!important;
+    box-shadow:0 2px 8px rgba(0,0,0,.35)!important;
+    opacity:1!important;
+    visibility:visible!important;
+    pointer-events:auto!important;
   }
 }
 
@@ -2016,57 +2069,3 @@ if ("serviceWorker" in navigator && (location.protocol === "https:" || location.
 </script>
 </body>
 </html>
-
-
-/* Center the attachment/overflow icon precisely inside its circular control. */
-#composerPlus,
-#attachBtn{
-  display:flex!important;
-  align-items:center!important;
-  justify-content:center!important;
-  padding:0!important;
-  line-height:0!important;
-  text-align:center!important;
-  box-sizing:border-box!important;
-}
-#composerPlus svg,
-#attachBtn svg{
-  display:block!important;
-  flex:0 0 20px!important;
-  width:20px!important;
-  height:20px!important;
-  margin:0!important;
-  position:static!important;
-  transform:none!important;
-}
-#attachBtn::before{
-  position:absolute;
-  inset:0;
-  display:flex!important;
-  align-items:center!important;
-  justify-content:center!important;
-  margin:0!important;
-  line-height:1!important;
-  pointer-events:none;
-}
-
-
-/* Mobile: show the reply control directly beside the existing ellipsis control. */
-@media (max-width:760px), (pointer:coarse){
-  .row.show-reactions .reply-desktop-action,
-  .row.has-image .reply-desktop-action{
-    display:grid!important;
-    position:fixed!important;
-    z-index:2147483002!important;
-    width:30px!important;
-    height:30px!important;
-    border:1px solid rgba(255,255,255,.16)!important;
-    border-radius:10px!important;
-    background:rgba(32,32,32,.96)!important;
-    color:#fff!important;
-    box-shadow:0 2px 8px rgba(0,0,0,.35)!important;
-    opacity:1!important;
-    visibility:visible!important;
-    pointer-events:auto!important;
-  }
-}
