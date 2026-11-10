@@ -133,6 +133,28 @@ service cloud.firestore {
       }
     }
 
+    // Short-lived typing state is visible only to the two members of its private room.
+    match /dms/{roomId}/typing/{userId} {
+      function validTypingRoomAccess() {
+        return isApproved()
+          && inRoom(roomId)
+          && roomId.split('_').size() == 2;
+      }
+
+      allow read: if validTypingRoomAccess();
+
+      allow create, update: if validTypingRoomAccess()
+        && request.auth.uid == userId
+        && request.resource.data.keys().hasOnly(['uid', 'typing', 'updatedAt'])
+        && request.resource.data.keys().hasAll(['uid', 'typing', 'updatedAt'])
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.typing == true
+        && request.resource.data.updatedAt is number;
+
+      allow delete: if validTypingRoomAccess()
+        && request.auth.uid == userId;
+    }
+
     match /profiles/{userId} {
       allow read: if isApproved();
       allow create, update: if isApproved()
