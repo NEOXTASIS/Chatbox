@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title">
+<title id="title">VOXA emblem</title>
+<defs><linearGradient id="m" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#fff"/><stop offset=".45" stop-color="#777b82"/><stop offset="1" stop-color="#d8dbe0"/></linearGradient><filter id="g"><feGaussianBlur stdDeviation="7" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>
+<path d="M55 65h100c23 0 39 12 54 32l93 132 90-128c15-22 32-36 60-36h65L299 413c-22 31-56 31-78 0z" fill="url(#m)" stroke="#f1f2f4" stroke-width="5" stroke-linejoin="round" filter="url(#g)"/>
+<path d="m290 248 78-99c14-18 30-26 54-26h45L325 294z" fill="url(#m)" stroke="#dfe2e7" stroke-width="4"/>
+</svg>
