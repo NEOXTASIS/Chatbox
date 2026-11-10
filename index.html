@@ -927,6 +927,19 @@ body.theme-light .mark{background:linear-gradient(145deg,rgba(180,180,180,.45),r
   }
 }
 
+
+/* Private-chat typing indicator: subtle monochrome label with animated dots. */
+.typing-indicator{display:flex;align-items:center;gap:8px;min-height:30px;padding:3px 22px 7px;color:var(--muted);font-size:12px;opacity:1;animation:typingFadeIn .2s ease-out both}
+.typing-indicator[hidden]{display:none!important}
+.typing-label{max-width:min(70vw,280px);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.typing-dots{display:inline-flex;align-items:center;gap:3px;height:14px}
+.typing-dots i{display:block;width:5px;height:5px;border-radius:50%;background:currentColor;opacity:.45;animation:typingDot 1s ease-in-out infinite}
+.typing-dots i:nth-child(2){animation-delay:.14s}
+.typing-dots i:nth-child(3){animation-delay:.28s}
+@keyframes typingDot{0%,60%,100%{transform:translateY(0);opacity:.35}30%{transform:translateY(-4px);opacity:1}}
+@keyframes typingFadeIn{from{opacity:0;transform:translateY(3px)}to{opacity:1;transform:translateY(0)}}
+body.theme-light .typing-dots i{background:#555}
+@media(prefers-reduced-motion:reduce){.typing-indicator{animation:none}.typing-dots i{animation:none;opacity:.7}}
 </style>
 </head>
 <body>
@@ -1012,6 +1025,10 @@ body.theme-light .mark{background:linear-gradient(145deg,rgba(180,180,180,.45),r
       <button id="me" class="me" hidden aria-label="Edit your profile"></button>
     </header>
     <div id="thread" class="thread" aria-live="polite"></div>
+    <div id="typingIndicator" class="typing-indicator" hidden aria-live="polite" aria-atomic="true">
+      <span id="typingLabel" class="typing-label"></span>
+      <span class="typing-dots" aria-hidden="true"><i></i><i></i><i></i></span>
+    </div>
     <button id="jumpLatest" class="jump-latest" type="button" aria-label="Jump to latest message" title="Jump to latest message" hidden>↓</button>
     <div id="replyPreview" class="reply-preview" hidden aria-live="polite">
       <div class="reply-preview-copy"><span id="replyPreviewName" class="reply-preview-name"></span><span id="replyPreviewText" class="reply-preview-text"></span></div>
@@ -1086,7 +1103,7 @@ body.theme-light .mark{background:linear-gradient(145deg,rgba(180,180,180,.45),r
   var $=function(id){return document.getElementById(id)};
   var PAGE=100;
   var auth=null,db=null,uid=null,isOwner=false,profiles={},msgs=[],mine=null,stickNext=true,newAvatar="",required=false,toastT=null,replyTarget=null;
-  var unsubs=[],msgUnsub=null,unreadUnsubs={},unreadCounts={},handledDenied=false,room=null,limitN=PAGE,hasMore=false,anchor=null,allowedList=[],pendingList=[],authMode="login",authBusy=false;
+  var unsubs=[],msgUnsub=null,typingUnsub=null,typingRoom=null,typingTimer=null,lastTypingWrite=0,unreadUnsubs={},unreadCounts={},handledDenied=false,room=null,limitN=PAGE,hasMore=false,anchor=null,allowedList=[],pendingList=[],authMode="login",authBusy=false;
   var audioCtx=null,alertsEnabled=false,firstSnapshotByRoom={},knownMessageIds={},lastAlertAt=0;
   var searchQuery="",chatSearchQuery="",pinnedChats={},mutedChats={},lightTheme=false,archivedChats={},showArchived=false,pinnedMessages={},favoriteMessages={},messageFilter="all";
   var ALERTS_STORAGE_KEY="chatboxAlertsEnabled";
@@ -1166,9 +1183,55 @@ body.theme-light .mark{background:linear-gradient(145deg,rgba(180,180,180,.45),r
     Object.keys(reactionUnsubs).forEach(function(k){try{reactionUnsubs[k]()}catch(e){}});
     reactionUnsubs={};reactionCache={};
   }
+  function typingCollection(r){
+    return db.collection("dms").doc(roomId(uid,r)).collection("typing");
+  }
+  function hideTypingIndicator(){
+    var box=$("typingIndicator");
+    if(box){box.hidden=true;$("typingLabel").textContent="";}
+  }
+  function stopOwnTyping(r){
+    clearTimeout(typingTimer);typingTimer=null;lastTypingWrite=0;
+    if(uid&&r&&db)typingCollection(r).doc(uid).delete().catch(function(){});
+  }
+  function stopRoomTyping(){
+    var oldRoom=typingRoom||room;
+    stopOwnTyping(oldRoom);
+    if(typingUnsub){try{typingUnsub()}catch(e){}typingUnsub=null}
+    typingRoom=null;hideTypingIndicator();
+  }
+  function announceTyping(){
+    if(!room||!uid||!db)return;
+    var currentRoom=room,now=Date.now(),ref=typingCollection(currentRoom).doc(uid);
+    if(!$("msg").value.trim()){stopOwnTyping(currentRoom);return}
+    if(now-lastTypingWrite>1800){
+      lastTypingWrite=now;
+      ref.set({uid:uid,typing:true,updatedAt:now}).catch(function(){});
+    }
+    clearTimeout(typingTimer);
+    typingTimer=setTimeout(function(){if(room===currentRoom)stopOwnTyping(currentRoom)},4200);
+  }
+  function subscribeTyping(r){
+    stopRoomTyping();
+    if(!r||!db)return;
+    typingRoom=r;
+    typingUnsub=typingCollection(r).onSnapshot(function(s){
+      if(room!==r)return;
+      var active=null,now=Date.now();
+      s.docs.forEach(function(d){
+        var v=d.data()||{};
+        if(d.id!==uid&&v.uid===d.id&&v.typing===true&&typeof v.updatedAt==="number"&&now-v.updatedAt<7500)active=d.id;
+      });
+      if(active&&profiles[active]){
+        $("typingLabel").textContent=nicknameOf(active)+" is typing";
+        $("typingIndicator").hidden=false;
+      }else hideTypingIndicator();
+    },function(){hideTypingIndicator()});
+  }
   function stopListening(){
     unsubs.forEach(function(u){try{u()}catch(e){}});unsubs=[];
     if(msgUnsub){try{msgUnsub()}catch(e){}msgUnsub=null}
+    stopRoomTyping();
     clearReactionListeners();
     Object.keys(unreadUnsubs).forEach(function(k){try{unreadUnsubs[k]()}catch(e){}});unreadUnsubs={};unreadCounts={};
     profiles={};msgs=[];mine=null;allowedList=[];room=null;limitN=PAGE;hasMore=false;anchor=null;
@@ -1333,9 +1396,10 @@ body.theme-light .mark{background:linear-gradient(145deg,rgba(180,180,180,.45),r
   function switchRoom(r){
     if(!r||r===uid||!profiles[r])return;
     saveDraftForRoom(room);
+    stopRoomTyping();
     clearReactionListeners();
     room=r;restoreDraftForRoom(r);saveLastRoom(r);limitN=PAGE;msgs=[];hasMore=false;anchor=null;stickNext=true;
-    closeSide();paintSide();paintTitle();render();subscribeMsgs();
+    closeSide();paintSide();paintTitle();render();subscribeMsgs();subscribeTyping(r);
     if(!coarse)$("msg").focus();
   }
   function loadOlder(){
@@ -1718,6 +1782,7 @@ if(m.attachment&&m.attachment.data){
     var sentReply=replyTarget,oldText=ta.value;
     if(v)ta.value="";fit();stickNext=true;
     var sendingRoom=room;
+    if(v)stopOwnTyping(sendingRoom);
     return collFor(sendingRoom).add(payload).then(function(){if(replyTarget===sentReply){replyTarget=null;$("replyPreview").hidden=true;}clearDraftForRoom(sendingRoom);playSendSound();return true}).catch(function(err){ta.value=oldText;fit();saveDraftForRoom(sendingRoom);toast("Couldn’t send that message"+(err&&err.code?" ("+err.code+")":"")+".");return false});
   }
   function fileToAttachment(file){
@@ -2069,7 +2134,8 @@ if(m.attachment&&m.attachment.data){
   };
   pinnedChats=loadUserMap("chatboxPinned");mutedChats=loadUserMap("chatboxMuted");archivedChats=loadUserMap("chatboxArchived");pinnedMessages=messageMap("chatboxPinnedMessages");favoriteMessages=messageMap("chatboxFavoriteMessages");applyTheme();
   updateAlertsButton();
-  $("msg").oninput=function(){fit();saveDraftForRoom(room)};
+  $("msg").oninput=function(){fit();saveDraftForRoom(room);announceTyping()};
+  $("msg").addEventListener("blur",function(){if(room)stopOwnTyping(room)});
   $("msg").onkeydown=function(e){if(e.key==="Enter"&&!e.shiftKey&&!coarse){e.preventDefault();sendComposer()}};
   $("send").onclick=function(){sendComposer();if(!coarse)$("msg").focus()};
   $("menu").onclick=openSide;
