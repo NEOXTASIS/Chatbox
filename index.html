@@ -1103,7 +1103,7 @@ body.theme-light .typing-dots i{background:#555}
   var $=function(id){return document.getElementById(id)};
   var PAGE=100;
   var auth=null,db=null,uid=null,isOwner=false,profiles={},msgs=[],mine=null,stickNext=true,newAvatar="",required=false,toastT=null,replyTarget=null;
-  var unsubs=[],msgUnsub=null,typingUnsub=null,typingRoom=null,typingTimer=null,lastTypingWrite=0,unreadUnsubs={},unreadCounts={},handledDenied=false,room=null,limitN=PAGE,hasMore=false,anchor=null,allowedList=[],pendingList=[],authMode="login",authBusy=false;
+  var unsubs=[],msgUnsub=null,typingUnsub=null,typingRoom=null,typingTimer=null,typingExpiryTimer=null,lastTypingWrite=0,unreadUnsubs={},unreadCounts={},handledDenied=false,room=null,limitN=PAGE,hasMore=false,anchor=null,allowedList=[],pendingList=[],authMode="login",authBusy=false;
   var audioCtx=null,alertsEnabled=false,firstSnapshotByRoom={},knownMessageIds={},lastAlertAt=0;
   var searchQuery="",chatSearchQuery="",pinnedChats={},mutedChats={},lightTheme=false,archivedChats={},showArchived=false,pinnedMessages={},favoriteMessages={},messageFilter="all";
   var ALERTS_STORAGE_KEY="chatboxAlertsEnabled";
@@ -1198,6 +1198,7 @@ body.theme-light .typing-dots i{background:#555}
     var oldRoom=typingRoom||room;
     stopOwnTyping(oldRoom);
     if(typingUnsub){try{typingUnsub()}catch(e){}typingUnsub=null}
+    clearTimeout(typingExpiryTimer);typingExpiryTimer=null;
     typingRoom=null;hideTypingIndicator();
   }
   function announceTyping(){
@@ -1217,14 +1218,16 @@ body.theme-light .typing-dots i{background:#555}
     typingRoom=r;
     typingUnsub=typingCollection(r).onSnapshot(function(s){
       if(room!==r)return;
-      var active=null,now=Date.now();
+      var active=null,activeAt=0,now=Date.now();
       s.docs.forEach(function(d){
         var v=d.data()||{};
-        if(d.id!==uid&&v.uid===d.id&&v.typing===true&&typeof v.updatedAt==="number"&&now-v.updatedAt<7500)active=d.id;
+        if(d.id!==uid&&v.uid===d.id&&v.typing===true&&typeof v.updatedAt==="number"&&now-v.updatedAt<7500){active=d.id;activeAt=v.updatedAt;}
       });
+      clearTimeout(typingExpiryTimer);typingExpiryTimer=null;
       if(active&&profiles[active]){
         $("typingLabel").textContent=nicknameOf(active)+" is typing";
         $("typingIndicator").hidden=false;
+        typingExpiryTimer=setTimeout(hideTypingIndicator,Math.max(0,activeAt+7600-Date.now()));
       }else hideTypingIndicator();
     },function(){hideTypingIndicator()});
   }
