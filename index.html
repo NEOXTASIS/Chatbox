@@ -82,6 +82,12 @@ button:focus-visible{outline:2px solid #fff;outline-offset:2px}
 .conv b{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .side-empty{padding:8px 12px;color:var(--dim);font-size:13px}
 .side-foot{padding:10px 12px 14px}
+.conv.has-unread{background:rgba(255,255,255,.095);box-shadow:inset 3px 0 0 rgba(255,255,255,.78)}
+.conv.has-unread .conv-name{color:#fff;font-weight:800}
+.unread-badge{flex:none;min-width:20px;height:20px;padding:0 6px;display:grid;place-items:center;border-radius:999px;background:#f2f2f2;color:#090909;font-size:10px;font-weight:800;line-height:1}
+body.theme-light .conv.has-unread{background:rgba(0,0,0,.09);box-shadow:inset 3px 0 0 #222}
+body.theme-light .conv.has-unread .conv-name{color:#111}
+body.theme-light .unread-badge{background:#111;color:#fff}
 .side-foot .btn{width:100%}
 .scrim{position:absolute;inset:0;background:rgba(0,0,0,.55);z-index:4}
 .main{position:relative;flex:1;min-width:0;display:flex;flex-direction:column;min-height:0}
@@ -329,20 +335,6 @@ body.theme-light .emoji-picker{background:#fff;border-color:rgba(35,40,70,.12)}
   .composer>.send{flex:0 0 42px;width:42px;height:42px}
 }
 @media(prefers-reduced-motion:reduce){.bg:after{animation:none}}
-
-
-/* Conversation identity sits below the header controls for quick context. */
-.conversation-label{
-  flex:none;padding:9px 20px 10px;color:var(--muted);font-size:12px;font-weight:600;letter-spacing:.015em;
-  border-bottom:1px solid rgba(255,255,255,.045);background:rgba(10,13,24,.16);
-  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
-}
-.conversation-label:not(:empty)::before{
-  content:"";display:inline-block;width:6px;height:6px;margin:0 8px 1px 1px;
-  border-radius:50%;background:linear-gradient(135deg,#b7a8ff,#6ee5d8);box-shadow:0 0 10px rgba(126,221,215,.25);
-}
-body.theme-light .conversation-label{background:rgba(255,255,255,.32);border-bottom-color:rgba(35,40,70,.06)}
-@media(max-width:760px){.conversation-label{padding:8px 12px;font-size:11px}}
 
 
 /* Monochrome palette: keep the entire interface strictly black, white, and gray. */
@@ -952,7 +944,6 @@ body.theme-light .mark{background:linear-gradient(145deg,rgba(180,180,180,.45),r
       </div>
       <button id="me" class="me" hidden aria-label="Edit your profile"></button>
     </header>
-    <div id="conversationLabel" class="conversation-label" aria-live="polite">Choose a person to start a private chat</div>
     <div id="thread" class="thread" aria-live="polite"></div>
     <button id="jumpLatest" class="jump-latest" type="button" aria-label="Jump to latest message" title="Jump to latest message" hidden>↓</button>
     <div id="replyPreview" class="reply-preview" hidden aria-live="polite">
@@ -1028,7 +1019,7 @@ body.theme-light .mark{background:linear-gradient(145deg,rgba(180,180,180,.45),r
   var $=function(id){return document.getElementById(id)};
   var PAGE=100;
   var auth=null,db=null,uid=null,isOwner=false,profiles={},msgs=[],mine=null,stickNext=true,newAvatar="",required=false,toastT=null,replyTarget=null;
-  var unsubs=[],msgUnsub=null,handledDenied=false,room=null,limitN=PAGE,hasMore=false,anchor=null,allowedList=[],pendingList=[],authMode="login",authBusy=false;
+  var unsubs=[],msgUnsub=null,unreadUnsubs={},unreadCounts={},handledDenied=false,room=null,limitN=PAGE,hasMore=false,anchor=null,allowedList=[],pendingList=[],authMode="login",authBusy=false;
   var audioCtx=null,alertsEnabled=false,firstSnapshotByRoom={},knownMessageIds={},lastAlertAt=0;
   var searchQuery="",chatSearchQuery="",pinnedChats={},mutedChats={},lightTheme=false;
   var ALERTS_STORAGE_KEY="chatboxAlertsEnabled";
@@ -1085,6 +1076,7 @@ body.theme-light .mark{background:linear-gradient(145deg,rgba(180,180,180,.45),r
     unsubs.forEach(function(u){try{u()}catch(e){}});unsubs=[];
     if(msgUnsub){try{msgUnsub()}catch(e){}msgUnsub=null}
     clearReactionListeners();
+    Object.keys(unreadUnsubs).forEach(function(k){try{unreadUnsubs[k]()}catch(e){}});unreadUnsubs={};unreadCounts={};
     profiles={};msgs=[];mine=null;allowedList=[];room=null;limitN=PAGE;hasMore=false;anchor=null;
   }
 
@@ -1096,8 +1088,19 @@ body.theme-light .mark{background:linear-gradient(145deg,rgba(180,180,180,.45),r
     var a;if(isGroup){a=el("div","av","#")}else a=avatar(p);
     b.appendChild(a);
     var wrap=el("span","conv-label");wrap.appendChild(el("b","conv-name",label));b.appendChild(wrap);
+    var unread=unreadCounts[key]||0;if(unread){b.classList.add("has-unread");var badge=el("span","unread-badge",unread>9?"9+":String(unread));badge.setAttribute("aria-label",unread+" unread messages");b.appendChild(badge)}
     var star=el("button","conv-star"+(pinnedChats[key]?" active":""),pinnedChats[key]?"★":"☆");star.type="button";star.title=pinnedChats[key]?"Unpin chat":"Pin chat";star.setAttribute("aria-label",star.title);star.onclick=function(ev){ev.stopPropagation();if(pinnedChats[key])delete pinnedChats[key];else pinnedChats[key]=true;saveUserMap("chatboxPinned",pinnedChats);paintSide()};b.appendChild(star);
     b.onclick=function(){switchRoom(key)};return b;
+  }
+  function syncUnreadListeners(){
+    var ids=Object.keys(profiles).filter(function(k){return k!==uid});
+    Object.keys(unreadUnsubs).forEach(function(k){if(ids.indexOf(k)<0){try{unreadUnsubs[k]()}catch(e){}delete unreadUnsubs[k];delete unreadCounts[k]}});
+    ids.forEach(function(k){if(unreadUnsubs[k])return;
+      unreadUnsubs[k]=collFor(k).orderBy("t","desc").limit(100).onSnapshot(function(s){
+        var count=0;s.docs.forEach(function(d){var v=d.data()||{},readBy=Array.isArray(v.readBy)?v.readBy:[];if(v.uid!==uid&&readBy.indexOf(uid)<0)count++});
+        unreadCounts[k]=count;paintSide();
+      },function(){});
+    });
   }
   function paintSide(){
     var l=$("list");l.textContent="";
@@ -1109,7 +1112,7 @@ body.theme-light .mark{background:linear-gradient(145deg,rgba(180,180,180,.45),r
     $("title").textContent=titleOf();
     var nb=$("nicknameBtn");if(nb)nb.hidden=!room;
     var cl=$("conversationLabel");
-    if(cl)cl.textContent=room?"Private conversation with "+titleOf():"Choose a person to start a private chat";
+    if(cl)cl.textContent="";
     $("msg").placeholder="Message";
     var mb=$("muteBtn");mb.hidden=!room;mb.textContent=room&&mutedChats[room]?"Chat alerts off":"Chat alerts on";mb.setAttribute("aria-pressed",room&&mutedChats[room]?"true":"false");
   }
@@ -1867,6 +1870,7 @@ if(m.attachment&&m.attachment.data){
     unsubs.push(db.collection("profiles").onSnapshot(function(s){
       profiles={};
       s.docs.forEach(function(d){var v=d.data();if(v)profiles[d.id]=v});
+      syncUnreadListeners();
       mine=profiles[uid]||null;paintMe();paintSide();paintTitle();render();
       if(!mine&&!s.metadata.fromCache&&$("modal").hidden)openProfile(true);
       else if(!room){var lastRoom=getLastRoom();if(lastRoom&&profiles[lastRoom]&&lastRoom!==uid)switchRoom(lastRoom)}
