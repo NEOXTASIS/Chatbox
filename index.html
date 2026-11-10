@@ -1116,6 +1116,25 @@ body.theme-light .mark{background:linear-gradient(145deg,rgba(180,180,180,.45),r
   function collFor(r){
     return db.collection("dms").doc(roomId(uid,r)).collection("messages");
   }
+  // Drafts stay on this device and are separated by account and conversation.
+  function draftStorageKey(r){return "chatboxDraft:"+String(uid||"guest")+":"+String(r||"");}
+  function saveDraftForRoom(r){
+    if(!r||!uid)return;
+    try{
+      var value=$("msg").value||"";
+      if(value.trim())localStorage.setItem(draftStorageKey(r),value);
+      else localStorage.removeItem(draftStorageKey(r));
+    }catch(e){}
+  }
+  function restoreDraftForRoom(r){
+    var value="";
+    try{if(uid&&r)value=localStorage.getItem(draftStorageKey(r))||"";}catch(e){}
+    $("msg").value=value;fit();
+  }
+  function clearDraftForRoom(r){
+    if(!r||!uid)return;
+    try{localStorage.removeItem(draftStorageKey(r));}catch(e){}
+  }
   function nickMap(){try{return JSON.parse(localStorage.getItem("chatboxNicknames:"+uid)||"{}")}catch(e){return {}}}
   function nicknameOf(k){return nickMap()[k]||nameOf(profiles[k])}
   function titleOf(){return room?nicknameOf(room):"Private chats"}
@@ -1295,8 +1314,9 @@ body.theme-light .mark{background:linear-gradient(145deg,rgba(180,180,180,.45),r
   function getLastRoom(){try{return uid?window.localStorage.getItem(LAST_ROOM_KEY+uid):null}catch(e){return null}}
   function switchRoom(r){
     if(!r||r===uid||!profiles[r])return;
+    saveDraftForRoom(room);
     clearReactionListeners();
-    room=r;saveLastRoom(r);limitN=PAGE;msgs=[];hasMore=false;anchor=null;stickNext=true;
+    room=r;restoreDraftForRoom(r);saveLastRoom(r);limitN=PAGE;msgs=[];hasMore=false;anchor=null;stickNext=true;
     closeSide();paintSide();paintTitle();render();subscribeMsgs();
     if(!coarse)$("msg").focus();
   }
@@ -1654,7 +1674,8 @@ if(m.attachment&&m.attachment.data){
     if(replyTarget)payload.replyTo={id:replyTarget.id,uid:replyTarget.uid,name:replyTarget.name,text:replyTarget.text};
     var sentReply=replyTarget,oldText=ta.value;
     if(v)ta.value="";fit();stickNext=true;
-    return collFor(room).add(payload).then(function(){if(replyTarget===sentReply){replyTarget=null;$("replyPreview").hidden=true;}playSendSound();return true}).catch(function(err){ta.value=oldText;fit();toast("Couldn’t send that message"+(err&&err.code?" ("+err.code+")":"")+".");return false});
+    var sendingRoom=room;
+    return collFor(sendingRoom).add(payload).then(function(){if(replyTarget===sentReply){replyTarget=null;$("replyPreview").hidden=true;}clearDraftForRoom(sendingRoom);playSendSound();return true}).catch(function(err){ta.value=oldText;fit();saveDraftForRoom(sendingRoom);toast("Couldn’t send that message"+(err&&err.code?" ("+err.code+")":"")+".");return false});
   }
   function fileToAttachment(file){
     return new Promise(function(resolve,reject){
@@ -1983,7 +2004,7 @@ if(m.attachment&&m.attachment.data){
   $("alertsBtn").onclick=toggleAlerts;
   pinnedChats=loadUserMap("chatboxPinned");mutedChats=loadUserMap("chatboxMuted");applyTheme();
   updateAlertsButton();
-  $("msg").oninput=fit;
+  $("msg").oninput=function(){fit();saveDraftForRoom(room)};
   $("msg").onkeydown=function(e){if(e.key==="Enter"&&!e.shiftKey&&!coarse){e.preventDefault();sendComposer()}};
   $("send").onclick=function(){sendComposer();if(!coarse)$("msg").focus()};
   $("menu").onclick=openSide;
