@@ -60,36 +60,42 @@ service cloud.firestore {
         && request.resource.data.text.size() > 0
         && request.resource.data.text.size() <= 2000
         && request.resource.data.t is number;
-      allow update: if false;
-      allow delete: if isApproved()
-        && (resource.data.uid == request.auth.uid || isOwner());
+      allow update, delete: if false;
     }
 
     match /dms/{roomId}/messages/{messageId} {
-      allow read: if isApproved()
-        && inRoom(roomId)
-        && roomId.split('_').size() == 2;
-      allow create: if isApproved()
-        && inRoom(roomId)
-        && roomId.split('_').size() == 2
+      function validRoomAccess() {
+        return isApproved()
+          && inRoom(roomId)
+          && roomId.split('_').size() == 2;
+      }
+
+      allow read: if validRoomAccess();
+
+      allow create: if validRoomAccess()
         && request.resource.data.uid == request.auth.uid
         && request.resource.data.text is string
         && request.resource.data.text.size() > 0
         && request.resource.data.text.size() <= 2000
         && request.resource.data.t is number;
-      allow update: if false;
-      allow delete: if isApproved()
-        && inRoom(roomId)
-        && roomId.split('_').size() == 2
+
+      // Permit only the sender to edit message text and its edit timestamp.
+      // All other fields, including sender identity and attachments, remain immutable.
+      allow update: if validRoomAccess()
+        && resource.data.uid == request.auth.uid
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['text', 'editedAt'])
+        && request.resource.data.diff(resource.data).affectedKeys().hasAll(['text', 'editedAt'])
+        && request.resource.data.text is string
+        && request.resource.data.text.size() > 0
+        && request.resource.data.text.size() <= 2000
+        && request.resource.data.editedAt is number;
+
+      allow delete: if validRoomAccess()
         && resource.data.uid == request.auth.uid;
 
-      // Each participant can add several distinct emoji reactions to a message.
-      // The document ID is {uid}_{emoji}, preventing one reaction from overwriting another.
       match /reactions/{reactionId} {
         function canAccessMessage() {
-          return isApproved()
-            && inRoom(roomId)
-            && roomId.split('_').size() == 2
+          return validRoomAccess()
             && exists(/databases/$(database)/documents/dms/$(roomId)/messages/$(messageId));
         }
 
