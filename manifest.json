@@ -1,6 +1,6 @@
 {
-  "name": "Chatbox",
-  "short_name": "Chatbox",
+  "name": "Voxa",
+  "short_name": "Voxa",
   "description": "Private messaging",
   "start_url": "./",
   "scope": "./",
