@@ -1000,6 +1000,8 @@ body.theme-light .mark{background:linear-gradient(145deg,rgba(180,180,180,.45),r
         <button id="actionsBtn" class="head-tool actions-toggle" type="button" aria-label="More options" aria-expanded="false" title="More options">•••</button>
         <div id="actionsMenu" class="actions-menu" hidden>
           <button id="searchBtn" class="head-tool" type="button" title="Search loaded messages" aria-label="Search messages">Search messages</button>
+          <button id="pinnedMessagesBtn" class="head-tool" type="button" title="Show messages pinned on this device" hidden>Pinned messages</button>
+          <button id="favoriteMessagesBtn" class="head-tool" type="button" title="Show favorite messages saved on this device" hidden>Favorites</button>
           <button id="archiveChatBtn" class="head-tool" type="button" title="Archive or restore this conversation" hidden>Archive chat</button>
           <button id="exportChatBtn" class="head-tool" type="button" title="Export this conversation as a text file" hidden>Export chat</button>
           <button id="attachmentsBtn" class="head-tool" type="button" title="Browse images and voice messages" aria-label="Attachments">Attachments</button>
@@ -1086,7 +1088,7 @@ body.theme-light .mark{background:linear-gradient(145deg,rgba(180,180,180,.45),r
   var auth=null,db=null,uid=null,isOwner=false,profiles={},msgs=[],mine=null,stickNext=true,newAvatar="",required=false,toastT=null,replyTarget=null;
   var unsubs=[],msgUnsub=null,unreadUnsubs={},unreadCounts={},handledDenied=false,room=null,limitN=PAGE,hasMore=false,anchor=null,allowedList=[],pendingList=[],authMode="login",authBusy=false;
   var audioCtx=null,alertsEnabled=false,firstSnapshotByRoom={},knownMessageIds={},lastAlertAt=0;
-  var searchQuery="",chatSearchQuery="",pinnedChats={},mutedChats={},lightTheme=false,archivedChats={},showArchived=false,pinnedMessages={},favoriteMessages={};
+  var searchQuery="",chatSearchQuery="",pinnedChats={},mutedChats={},lightTheme=false,archivedChats={},showArchived=false,pinnedMessages={},favoriteMessages={},messageFilter="all";
   var ALERTS_STORAGE_KEY="chatboxAlertsEnabled";
   var THEME_STORAGE_KEY="chatboxTheme";
   try{lightTheme=window.localStorage.getItem(THEME_STORAGE_KEY)==="light";}catch(e){}
@@ -1210,6 +1212,9 @@ body.theme-light .mark{background:linear-gradient(145deg,rgba(180,180,180,.45),r
     var mb=$("muteBtn");mb.hidden=!room;mb.textContent=room&&mutedChats[room]?"Chat alerts off":"Chat alerts on";mb.setAttribute("aria-pressed",room&&mutedChats[room]?"true":"false");
     var ab=$("archiveChatBtn");if(ab){ab.hidden=!room;ab.textContent=room&&archivedChats[room]?"Restore chat":"Archive chat"}
     var eb=$("exportChatBtn");if(eb)eb.hidden=!room;
+    var pb=$("pinnedMessagesBtn"),fb=$("favoriteMessagesBtn");
+    if(pb){pb.hidden=!room;pb.textContent=messageFilter==="pinned"?"Show all messages":"Pinned messages";pb.setAttribute("aria-pressed",messageFilter==="pinned"?"true":"false")}
+    if(fb){fb.hidden=!room;fb.textContent=messageFilter==="favorites"?"Show all messages":"Favorites";fb.setAttribute("aria-pressed",messageFilter==="favorites"?"true":"false")}
   }
   function paintMe(){
     var b=$("me");b.textContent="";
@@ -1345,6 +1350,7 @@ body.theme-light .mark{background:linear-gradient(145deg,rgba(180,180,180,.45),r
     if(!msgs.length){th.appendChild(el("div","empty","No messages yet. Start a private conversation with "+titleOf()+"."));return}
     if(hasMore&&!searchQuery){var mb=el("button","more","Load older messages");mb.onclick=loadOlder;th.appendChild(mb)}
     var visibleMsgs=searchQuery?msgs.filter(function(m){return String(m.text||"").toLowerCase().indexOf(searchQuery)>=0}):msgs;
+    if(messageFilter!=="all")visibleMsgs=visibleMsgs.filter(function(m){var key=messageKey(room,m.id);return messageFilter==="pinned"?!!pinnedMessages[key]:!!favoriteMessages[key]});
     if(searchQuery){th.appendChild(el("div","search-status",visibleMsgs.length+" matching message"+(visibleMsgs.length===1?"":"s")+" in loaded history"));if(!visibleMsgs.length){th.appendChild(el("div","empty","No loaded messages match that search. Load older messages before searching further back."));return}}
     var lastDay="",lastU=null,lastT=0;
     visibleMsgs.forEach(function(m){
@@ -1515,9 +1521,9 @@ var messageText=String(m.text||"");
       // keep the emoji/options bar free of a text Reply button.
       var savedKey=messageKey(room,m.id);
       var favoriteBtn=el("button","menu-action",favoriteMessages[savedKey]?"★ Remove favorite":"☆ Favorite");
-      favoriteBtn.type="button";favoriteBtn.onclick=function(ev){ev.stopPropagation();toggleMessageMap("chatboxFavoriteMessages",favoriteMessages,m.id);closeMessageMenu(row);toast(favoriteMessages[savedKey]?"Removed from favorites.":"Added to favorites on this device.")};quick.appendChild(favoriteBtn);
+      favoriteBtn.type="button";favoriteBtn.onclick=function(ev){ev.stopPropagation();var wasSaved=!!favoriteMessages[savedKey];toggleMessageMap("chatboxFavoriteMessages",favoriteMessages,m.id);closeMessageMenu(row);toast(wasSaved?"Removed from favorites.":"Added to favorites on this device.")};quick.appendChild(favoriteBtn);
       var pinMessageBtn=el("button","menu-action",pinnedMessages[savedKey]?"Unpin message":"Pin message");
-      pinMessageBtn.type="button";pinMessageBtn.onclick=function(ev){ev.stopPropagation();toggleMessageMap("chatboxPinnedMessages",pinnedMessages,m.id);closeMessageMenu(row);toast(pinnedMessages[savedKey]?"Message unpinned.":"Message pinned on this device.")};quick.appendChild(pinMessageBtn);
+      pinMessageBtn.type="button";pinMessageBtn.onclick=function(ev){ev.stopPropagation();var wasPinned=!!pinnedMessages[savedKey];toggleMessageMap("chatboxPinnedMessages",pinnedMessages,m.id);closeMessageMenu(row);toast(wasPinned?"Message unpinned.":"Message pinned on this device.")};quick.appendChild(pinMessageBtn);
       var forwardBtn=el("button","menu-action","Forward");
       forwardBtn.type="button";forwardBtn.onclick=function(ev){
         ev.stopPropagation();
@@ -1609,7 +1615,9 @@ if(m.attachment&&m.attachment.data){
   document.addEventListener("click",function(e){if(!$("actionsMenu").hidden&&!$("actionsMenu").contains(e.target)&&e.target!==$("actionsBtn"))closeActionsMenu()});
   document.addEventListener("keydown",function(e){if(e.key==="Escape")closeActionsMenu()});
   $("themeBtn").addEventListener("click",function(){lightTheme=!lightTheme;try{window.localStorage.setItem(THEME_STORAGE_KEY,lightTheme?"light":"dark")}catch(e){}applyTheme()});
-  $("searchBtn").addEventListener("click",function(){if(!room){toast("Open a private chat first.");return}var q=window.prompt("Search messages loaded in this chat:",searchQuery);if(q===null)return;searchQuery=q.trim().toLowerCase();stickNext=false;render()});
+  $("searchBtn").addEventListener("click",function(){if(!room){toast("Open a private chat first.");return}var q=window.prompt("Search messages loaded in this chat:",searchQuery);if(q===null)return;searchQuery=q.trim().toLowerCase();messageFilter="all";stickNext=false;render()});
+  $("pinnedMessagesBtn").addEventListener("click",function(){if(!room)return;messageFilter=messageFilter==="pinned"?"all":"pinned";searchQuery="";render();closeActionsMenu()});
+  $("favoriteMessagesBtn").addEventListener("click",function(){if(!room)return;messageFilter=messageFilter==="favorites"?"all":"favorites";searchQuery="";render();closeActionsMenu()});
   var attachmentMode="images";
   function closeAttachments(){$("attachmentsModal").hidden=true}
   function dateLabel(ts){var d=new Date(ts||0),now=new Date(),today=new Date(now.getFullYear(),now.getMonth(),now.getDate()),day=new Date(d.getFullYear(),d.getMonth(),d.getDate()),diff=Math.round((today-day)/86400000);if(diff===0)return "Today";if(diff===1)return "Yesterday";return d.toLocaleDateString(undefined,{year:"numeric",month:"long",day:"numeric"})}
