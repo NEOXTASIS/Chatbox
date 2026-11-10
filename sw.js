@@ -1,11 +1,11 @@
-/* VOXA service worker: PWA lifecycle and push notification display. */
+/* DEZRA service worker: PWA lifecycle and push notification display. */
 self.addEventListener("install", function(event){ self.skipWaiting(); });
 self.addEventListener("activate", function(event){ event.waitUntil(self.clients.claim()); });
 self.addEventListener("push", function(event){
-  var data={title:"VOXA",body:"You have a new message.",url:"./"};
+  var data={title:"DEZRA",body:"You have a new message.",url:"./"};
   try{ if(event.data){ var payload=event.data.json(); data=Object.assign(data,payload.notification||{},payload.data||{},payload); } }catch(e){ try{if(event.data)data.body=event.data.text();}catch(_){} }
-  var title=String(data.title||"VOXA");
-  var options={body:String(data.body||"You have a new message."),icon:"./icon.svg",badge:"./icon.svg",tag:String(data.tag||"voxa-message"),data:{url:String(data.url||"./")},renotify:false};
+  var title=String(data.title||"DEZRA");
+  var options={body:String(data.body||"You have a new message."),icon:"./dezra-logo.png",badge:"./dezra-logo.png",tag:String(data.tag||"dezra-message"),data:{url:String(data.url||"./")},renotify:false};
   event.waitUntil(self.registration.showNotification(title,options));
 });
 self.addEventListener("notificationclick", function(event){
