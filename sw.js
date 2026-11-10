@@ -5,7 +5,7 @@ self.addEventListener("push", function(event){
   var data={title:"DEZRA",body:"You have a new message.",url:"./"};
   try{ if(event.data){ var payload=event.data.json(); data=Object.assign(data,payload.notification||{},payload.data||{},payload); } }catch(e){ try{if(event.data)data.body=event.data.text();}catch(_){} }
   var title=String(data.title||"DEZRA");
-  var options={body:String(data.body||"You have a new message."),icon:"./dezra-logo.png",badge:"./dezra-logo.png",tag:String(data.tag||"dezra-message"),data:{url:String(data.url||"./")},renotify:false};
+  var options={body:String(data.body||"You have a new message."),icon:"./dezra-logo.svg",badge:"./dezra-logo.svg",tag:String(data.tag||"dezra-message"),data:{url:String(data.url||"./")},renotify:false};
   event.waitUntil(self.registration.showNotification(title,options));
 });
 self.addEventListener("notificationclick", function(event){
