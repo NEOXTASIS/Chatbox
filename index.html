@@ -2007,3 +2007,36 @@ if ("serviceWorker" in navigator && (location.protocol === "https:" || location.
 </script>
 </body>
 </html>
+
+
+/* Center the attachment/overflow icon precisely inside its circular control. */
+#composerPlus,
+#attachBtn{
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  padding:0!important;
+  line-height:0!important;
+  text-align:center!important;
+  box-sizing:border-box!important;
+}
+#composerPlus svg,
+#attachBtn svg{
+  display:block!important;
+  flex:0 0 20px!important;
+  width:20px!important;
+  height:20px!important;
+  margin:0!important;
+  position:static!important;
+  transform:none!important;
+}
+#attachBtn::before{
+  position:absolute;
+  inset:0;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  margin:0!important;
+  line-height:1!important;
+  pointer-events:none;
+}
