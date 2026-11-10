@@ -990,6 +990,19 @@ body.theme-light .typing-dots i{background:#555}
   .dots-action,.reply-desktop-action{width:30px!important;height:30px!important}
 }
 
+
+/* Prevent browser scroll anchoring from fighting the app's manual older-message
+   position restoration. This avoids bubbles and the composer appearing to jump. */
+.thread{
+  overflow-anchor:none;
+  overscroll-behavior-y:contain;
+  scroll-behavior:auto;
+}
+@media (max-width:760px){
+  .thread{-webkit-overflow-scrolling:touch;touch-action:pan-y}
+  .composer-shell,.composer-shell:focus-within{transform:none!important}
+}
+
 </style>
 </head>
 <body>
@@ -1682,8 +1695,9 @@ if(m.attachment&&m.attachment.data){
       // Keep the ellipsis centered beside the actual bubble/media as the thread moves,
       // including after a reaction capsule is added below the message.
       requestAnimationFrame(positionDots);
-      window.addEventListener("resize",function(){positionDots();if(row.classList.contains("show-reactions"))positionQuickbar()});
-      th.addEventListener("scroll",function(){positionDots();if(row.classList.contains("show-reactions"))positionQuickbar()},{passive:true});
+      /* Scroll and resize positioning is handled once globally below.
+         Do not attach one listener per message: snapshots rebuild these rows,
+         and the old pattern caused an ever-growing scroll-handler pile-up. */
       var touchStartX=0,touchStartY=0,touchMoved=false,suppressNextClick=false,longPressTimer=null,longPressTriggered=false;
       b.addEventListener("touchstart",function(ev){
         if(!coarse||!ev.changedTouches||!ev.changedTouches.length)return;
