@@ -844,6 +844,52 @@ body.theme-light .mark{background:linear-gradient(145deg,rgba(180,180,180,.45),r
 }
 
 
+
+/* ChatGPT-style composer plus and subtle hover affordances with native tooltips. */
+#composerPlus{
+  color:var(--ink)!important;
+  border:0!important;
+  border-radius:50%!important;
+  background:transparent!important;
+  box-shadow:none!important;
+  transition:background .18s ease,color .18s ease,transform .18s ease!important;
+}
+#composerPlus svg{
+  width:24px!important;
+  height:24px!important;
+  flex:0 0 24px!important;
+}
+#composerPlus:hover,
+#composerPlus:focus-visible,
+#composerPlus:active{
+  border:0!important;
+  border-radius:50%!important;
+  background:rgba(255,255,255,.11)!important;
+  box-shadow:0 0 0 1px rgba(255,255,255,.045) inset!important;
+}
+.composer-options .emoji-toggle{
+  transition:background .18s ease,border-color .18s ease,transform .18s ease,box-shadow .18s ease!important;
+}
+.composer-options .emoji-toggle:hover,
+.composer-options .emoji-toggle:focus-visible{
+  background:rgba(255,255,255,.17)!important;
+  border-color:rgba(255,255,255,.24)!important;
+  box-shadow:0 0 0 3px rgba(255,255,255,.055)!important;
+}
+.voice-send-btn,.composer>.send{
+  transition:background .18s ease,color .18s ease,box-shadow .18s ease,transform .18s ease!important;
+}
+.voice-send-btn:hover,.voice-send-btn:focus-visible,
+.composer>.send:hover,.composer>.send:focus-visible{
+  box-shadow:0 0 0 5px rgba(255,255,255,.075)!important;
+}
+.dots-action:hover,.dots-action:focus-visible,
+.reply-desktop-action:hover,.reply-desktop-action:focus-visible{
+  border-radius:50%!important;
+  background:rgba(255,255,255,.12)!important;
+  box-shadow:0 0 0 2px rgba(255,255,255,.035)!important;
+}
+
 /* Keep the composer attachment "+" as a bare icon, without a circular button. */
 #composerPlus{
   border:0!important;
@@ -972,7 +1018,7 @@ body.theme-light .mark{background:linear-gradient(145deg,rgba(180,180,180,.45),r
       <div class="composer-shell">
         <div id="composerPreview" class="composer-preview" hidden aria-live="polite"></div>
         <div class="composer-tools">
-          <button id="composerPlus" class="emoji-toggle composer-plus" type="button" aria-label="More message options" aria-expanded="false" title="More options"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button>
+          <button id="composerPlus" class="emoji-toggle composer-plus" type="button" aria-label="More message options" aria-expanded="false" title="More message options"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button>
           <div id="composerOptions" class="composer-options" hidden aria-label="Message options">
             <button id="emojiToggle" class="emoji-toggle line-tool emoji-tool" type="button" aria-label="Add emoji" title="Add emoji"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M8.5 14s1.2 2 3.5 2 3.5-2 3.5-2M9 9.5h.01M15 9.5h.01"/></svg></button>
             
@@ -984,7 +1030,7 @@ body.theme-light .mark{background:linear-gradient(145deg,rgba(180,180,180,.45),r
         <input id="attachInput" type="file" accept="image/*,video/*,audio/*,.pdf,.txt,.doc,.docx,.xls,.xlsx,.zip" multiple hidden>
         <textarea id="msg" rows="1" maxlength="2000" placeholder="Message" aria-label="Write a message"></textarea>
         <button id="voiceBtn" class="voice-send-btn" type="button" aria-label="Record a voice message" title="Record a voice message"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="12" rx="3"/><path d="M5.5 11.5a6.5 6.5 0 0 0 13 0M12 18v3M9 21h6"/></svg></button>
-        <button id="send" class="send" aria-label="Send message"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 19V5M6 11l6-6 6 6"/></svg></button>
+        <button id="send" class="send" aria-label="Send message" title="Send message"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 19V5M6 11l6-6 6 6"/></svg></button>
       </div>
     </div>
   </section>
