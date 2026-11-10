@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 882 671" role="img" aria-labelledby="title desc">
+<title id="title">VOXA</title><desc id="desc">A metallic silver angular V emblem above the VOXA wordmark.</desc>
+<defs>
+ <linearGradient id="metal" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff"/><stop offset=".28" stop-color="#777b82"/><stop offset=".52" stop-color="#17191d"/><stop offset=".76" stop-color="#c6c9ce"/><stop offset="1" stop-color="#555a61"/></linearGradient>
+ <linearGradient id="edge" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff"/><stop offset="1" stop-color="#8d929a"/></linearGradient>
+ <filter id="glow" x="-35%" y="-35%" width="170%" height="170%"><feGaussianBlur stdDeviation="8" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+</defs>
+<g filter="url(#glow)" stroke="url(#edge)" stroke-width="3" stroke-linejoin="round">
+ <path d="M125 70h145c27 0 47 13 64 37l139 199 131-194c17-25 38-42 70-42h93L471 418c-24 34-61 34-85 0z" fill="url(#metal)"/>
+ <path d="M474 304 590 166c18-21 39-31 68-31h88L571 351z" fill="url(#metal)"/>
+</g>
+<g fill="url(#metal)" stroke="#dfe2e7" stroke-width="2" stroke-linejoin="round" filter="url(#glow)">
+ <path d="M60 510 112 510 176 590 240 510 292 510 176 646z"/>
+ <rect x="330" y="510" width="178" height="136" rx="38"/>
+ <path d="M352 548v60c0 14 10 24 24 24h86c14 0 24-10 24-24v-60c0-14-10-24-24-24h-86c-14 0-24 10-24 24z" fill="#090a0c" stroke="#aeb3bb"/>
+ <path d="M540 510h54l64 62 64-62h54l-118 136z"/>
+ <path d="M736 646 824 510h50l-88 136z"/>
+</g>
+</svg>
