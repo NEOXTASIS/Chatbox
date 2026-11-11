@@ -1039,6 +1039,18 @@ body.theme-light .typing-dots i{background:#555}
   #thread .row{gap:8px}
 }
 
+
+/* Keep chat rows at their natural height in the flex-scrolling message list.
+   Prevents the newest message from being compressed or pushed out of view. */
+#thread.thread>.row,
+#thread.thread>.day,
+#thread.thread>.more,
+#thread.thread>.search-status{
+  flex:0 0 auto;
+}
+#thread.thread>.row{align-self:stretch}
+#thread.thread{scroll-padding-bottom:14px}
+
 </style>
 </head>
 <body>
@@ -1508,8 +1520,19 @@ body.theme-light .typing-dots i{background:#555}
     anchor={h:th.scrollHeight,top:th.scrollTop};
     limitN+=PAGE;subscribeMsgs();
   }
+  function scrollThreadToLatest(th){
+    if(!th)return;
+    requestAnimationFrame(function(){
+      th.scrollTop=Math.max(0,th.scrollHeight-th.clientHeight);
+      requestAnimationFrame(function(){
+        th.scrollTop=Math.max(0,th.scrollHeight-th.clientHeight);
+        $("jumpLatest").hidden=th.scrollHeight-th.scrollTop-th.clientHeight<160||!!searchQuery;
+      });
+    });
+  }
   function render(){
-    var th=$("thread"),near=th.scrollHeight-th.scrollTop-th.clientHeight<90;
+    var th=$("thread"),near=th.scrollHeight-th.scrollTop-th.clientHeight<140;
+    var keepAtBottom=(near||stickNext)&&!searchQuery;
     th.textContent="";
     if(!room){th.appendChild(el("div","empty","Select a member to start a private conversation. Only you and that member can read its messages."));return}
     if(!msgs.length){th.appendChild(el("div","empty","No messages yet. Start a private conversation with "+titleOf()+"."));return}
@@ -1780,8 +1803,19 @@ if(m.attachment&&m.attachment.data){
       if(bar.children.length){col.classList.add("has-reactions");col.appendChild(bar);}
       row.appendChild(col);th.appendChild(row);if(hasImage)positionDots();
     });
-    if(anchor){th.scrollTop=anchor.top+(th.scrollHeight-anchor.h);anchor=null}
-    else if((near||stickNext)&&!searchQuery){th.scrollTop=th.scrollHeight;stickNext=false}
+    if(anchor){
+      th.scrollTop=anchor.top+(th.scrollHeight-anchor.h);
+      anchor=null;
+    }else if(keepAtBottom){
+      stickNext=false;
+      scrollThreadToLatest(th);
+      /* Media can finish loading after the first layout pass and increase
+         scrollHeight. Keep the newest message visible while that happens. */
+      Array.prototype.forEach.call(th.querySelectorAll("img,video,iframe"),function(media){
+        media.addEventListener("load",function(){scrollThreadToLatest(th)},{once:true});
+        media.addEventListener("loadedmetadata",function(){scrollThreadToLatest(th)},{once:true});
+      });
+    }
     $("jumpLatest").hidden=th.scrollHeight-th.scrollTop-th.clientHeight<160||!!searchQuery
   }
   function fit(){var t=$("msg");t.style.height="auto";t.style.height=Math.min(t.scrollHeight,140)+"px"}
@@ -1844,7 +1878,7 @@ if(m.attachment&&m.attachment.data){
   $("attachmentsVoiceTab").addEventListener("click",function(){attachmentMode="voice";this.classList.add("active");$("attachmentsImagesTab").classList.remove("active");$("attachmentsVideosTab").classList.remove("active");loadAttachmentsForCurrentRoom()});
 
   $("muteBtn").addEventListener("click",function(){if(!room)return;if(mutedChats[room])delete mutedChats[room];else mutedChats[room]=true;saveUserMap("chatboxMuted",mutedChats);paintTitle();toast(mutedChats[room]?"Notifications muted for this chat.":"Notifications enabled for this chat.")});
-  $("jumpLatest").addEventListener("click",function(){var th=$("thread");th.scrollTop=th.scrollHeight;$("jumpLatest").hidden=true});
+  $("jumpLatest").addEventListener("click",function(){scrollThreadToLatest($("thread"));$("jumpLatest").hidden=true});
   $("thread").addEventListener("scroll",function(){var th=$("thread");$("jumpLatest").hidden=th.scrollHeight-th.scrollTop-th.clientHeight<160||!!searchQuery;if(window.__chatboxActiveMessageActionsPosition)window.__chatboxActiveMessageActionsPosition();if(window.__chatboxActiveQuickbarPosition)window.__chatboxActiveQuickbarPosition()},{passive:true});
   function openImageLightbox(src){var overlay=document.createElement("div");overlay.className="image-lightbox";overlay.setAttribute("role","dialog");overlay.setAttribute("aria-label","Full-size image");var close=document.createElement("button");close.type="button";close.textContent="×";close.setAttribute("aria-label","Close image");var img=document.createElement("img");img.src=src;img.alt="Full-size sent image";function done(){overlay.remove();document.removeEventListener("keydown",key)}function key(e){if(e.key==="Escape")done()}close.onclick=done;overlay.addEventListener("click",function(e){if(e.target===overlay)done()});img.addEventListener("click",function(e){e.stopPropagation()});overlay.appendChild(img);overlay.appendChild(close);document.body.appendChild(overlay);document.addEventListener("keydown",key)}
   function formatAudioTime(seconds){if(!isFinite(seconds)||seconds<0)return "0:00";var n=Math.floor(seconds);return Math.floor(n/60)+":"+String(n%60).padStart(2,"0")}
