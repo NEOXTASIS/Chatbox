@@ -1005,6 +1005,40 @@ body.theme-light .typing-dots i{background:#555}
   .composer-shell,.composer-shell:focus-within{transform:none!important}
 }
 
+
+/* Mobile chat viewport: message rows must never create a horizontal scroller.
+   Long links/media/reaction strips should wrap or clip inside the thread. */
+#thread.thread{
+  width:100%;
+  max-width:100%;
+  min-width:0;
+  box-sizing:border-box;
+  overflow-y:auto!important;
+  overflow-x:hidden!important;
+  overscroll-behavior-x:none;
+}
+#thread.thread>.row,
+#thread.thread>.day,
+#thread.thread>.more,
+#thread.thread>.empty{
+  min-width:0;
+  max-width:100%;
+  box-sizing:border-box;
+}
+#thread.thread>.row{width:100%}
+#thread .col{min-width:0;max-width:min(78%,560px)}
+#thread .bub{
+  min-width:0;
+  max-width:100%;
+  overflow-wrap:anywhere;
+  word-break:break-word;
+}
+#thread img,#thread video{max-width:100%}
+@media(max-width:760px){
+  #thread.thread{padding-left:12px;padding-right:12px}
+  #thread .row{gap:8px}
+}
+
 </style>
 </head>
 <body>
