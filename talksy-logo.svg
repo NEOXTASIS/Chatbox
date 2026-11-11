@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 620" role="img" aria-labelledby="title desc">
+<title id="title">TALKSY — Chat Smarter</title><desc id="desc">A metallic silver futuristic messaging emblem with a speech bubble and orbital ring above the TALKSY wordmark and Chat Smarter tagline.</desc>
+<defs>
+ <linearGradient id="metal" x1="0" y1="0" x2="0.9" y2="1"><stop offset="0" stop-color="#fff"/><stop offset=".18" stop-color="#aeb9c8"/><stop offset=".36" stop-color="#f8fbff"/><stop offset=".58" stop-color="#596574"/><stop offset=".78" stop-color="#dce5f1"/><stop offset="1" stop-color="#657080"/></linearGradient>
+ <linearGradient id="edge" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#f7fbff"/><stop offset=".5" stop-color="#75869b"/><stop offset="1" stop-color="#fff"/></linearGradient>
+ <linearGradient id="blue" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#fff"/><stop offset=".45" stop-color="#7bbcff"/><stop offset="1" stop-color="#dff4ff"/></linearGradient>
+ <filter id="glow" x="-40%" y="-40%" width="180%" height="180%"><feGaussianBlur stdDeviation="7" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+</defs>
+<g transform="translate(0 2)" stroke-linejoin="round">
+ <path d="M305 82h335c91 0 153 59 153 150v78c0 93-64 153-158 153H305V82zm73 68v245h257c52 0 82-30 82-85v-77c0-54-30-83-82-83H378z" fill="url(#metal)" stroke="#101722" stroke-width="9"/>
+ <path d="M384 151h251c53 0 82 29 82 83v77c0 55-30 84-82 84" fill="none" stroke="#fff" stroke-opacity=".75" stroke-width="4"/>
+ <path d="M416 236h158c36 0 59 23 59 57v33c0 34-23 57-59 57h-90l-68 43v-43h-20V293c0-34 23-57 57-57z" fill="#080b10" stroke="url(#edge)" stroke-width="7"/>
+ <g fill="#f7fbff" filter="url(#glow)"><circle cx="475" cy="310" r="12"/><circle cx="531" cy="310" r="12"/><circle cx="587" cy="310" r="12"/></g>
+ <path d="M198 417C252 290 754 91 824 129c53 29-4 138-99 220" fill="none" stroke="#070b12" stroke-width="33"/>
+ <path d="M198 417C252 290 754 91 824 129c53 29-4 138-99 220" fill="none" stroke="url(#edge)" stroke-width="22"/>
+ <path d="M198 417C252 290 754 91 824 129c53 29-4 138-99 220" fill="none" stroke="url(#blue)" stroke-width="4" filter="url(#glow)"/>
+ <path d="M202 417c91 80 517-5 628-112" fill="none" stroke="url(#metal)" stroke-width="22"/>
+</g>
+<g fill="url(#metal)" stroke="#111821" stroke-width="5" stroke-linejoin="round" font-family="Arial,Helvetica,sans-serif" font-weight="800" text-anchor="middle">
+ <text x="500" y="555" font-size="126" letter-spacing="7">TALKSY</text>
+</g>
+<path d="M185 592h180m450 0h180" stroke="url(#edge)" stroke-width="5"/>
+<text x="500" y="608" fill="#e9eef6" font-family="Arial,Helvetica,sans-serif" font-size="25" font-weight="700" letter-spacing="12" text-anchor="middle">CHAT SMARTER</text>
+</svg>
