@@ -1,6 +1,6 @@
 {
-  "name": "DEZRA",
-  "short_name": "DEZRA",
+  "name": "TALKSY",
+  "short_name": "TALKSY",
   "description": "Private messaging",
   "start_url": "./",
   "scope": "./",
@@ -10,7 +10,7 @@
   "theme_color": "#080a12",
   "icons": [
     {
-      "src": "./dezra-logo.svg",
+      "src": "./talksy-logo.svg",
       "sizes": "any",
       "type": "image/svg+xml",
       "purpose": "any maskable"
