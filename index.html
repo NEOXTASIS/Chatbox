@@ -107,7 +107,7 @@ body.theme-light{--bg:#f0f0f0;--win:#fff;--ink:#171717;--muted:#666;--dim:#85858
 .thread{flex:1;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;padding:6px 20px 16px;display:flex;flex-direction:column;scrollbar-width:thin;scrollbar-color:#2a2a2a transparent}
 /* Do not use an auto-margin flex spacer above the messages.
    In a scrollable column this can fight scroll anchoring as rows are rebuilt. */
-.thread::before{content:none!important;display:none!important;margin:0!important}
+.thread::before{content:"";display:block;flex:1 0 0;min-height:0;margin:0;pointer-events:none}
 .empty{margin:auto;color:var(--dim);text-align:center;padding:20px}
 .more{align-self:center;margin:8px 0;padding:8px 16px;border-radius:999px;background:var(--hover);font-size:13px;font-weight:600}
 .day{align-self:center;margin:16px 0 4px;color:var(--dim);font-size:12px}
